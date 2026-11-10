@@ -370,7 +370,91 @@ export default function App() {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+  function handleEditCustomAgent(agent) {
+    const name = window.prompt("Enter new agent name:", agent.name);
+    if (name === null) return;
 
+    const description = window.prompt(
+      "Enter new description:",
+      agent.description
+    );
+    if (description === null) return;
+
+    const instructions = window.prompt(
+      "Enter new agent instructions:",
+      agent.instructions || ""
+    );
+    if (instructions === null) return;
+
+    const cleanName = name.trim();
+    const cleanDescription = description.trim();
+    const cleanInstructions = instructions.trim();
+
+    if (!cleanName || !cleanDescription || !cleanInstructions) {
+      alert("All fields are required.");
+      return;
+    }
+
+    if (cleanName.length > 40 || cleanInstructions.length > 1000) {
+      alert("Name limit: 40 characters. Instructions limit: 1000 characters.");
+      return;
+    }
+
+    const duplicate = allAgents.some(
+      item =>
+        item.id !== agent.id &&
+        item.name.toLowerCase() === cleanName.toLowerCase()
+    );
+
+    if (duplicate) {
+      alert("An agent with this name already exists.");
+      return;
+    }
+
+    const updatedAgent = {
+      ...agent,
+      name: cleanName,
+      description: cleanDescription,
+      instructions: cleanInstructions
+    };
+
+    setCustomAgents(previous =>
+      previous.map(item =>
+        item.id === agent.id ? updatedAgent : item
+      )
+    );
+
+    setDetailsAgent(updatedAgent);
+
+    if (selectedAgent?.id === agent.id) {
+      setSelectedAgent(updatedAgent);
+    }
+
+    alert("Custom agent updated successfully!");
+  }
+
+  function handleDeleteCustomAgent(agent) {
+    const confirmed = window.confirm(
+      `Delete "${agent.name}" and its chat history permanently?`
+    );
+
+    if (!confirmed) return;
+
+    setCustomAgents(previous =>
+      previous.filter(item => item.id !== agent.id)
+    );
+
+    setChats(previous =>
+      previous.filter(chat => chat.agentId !== agent.id)
+    );
+
+    setDetailsAgent(null);
+    setSelectedAgent(null);
+    setActiveChatId(null);
+
+    alert("Custom agent deleted successfully!");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   function handleCreateAgent(e) {
     e.preventDefault();
 
