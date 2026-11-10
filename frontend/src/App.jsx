@@ -752,6 +752,81 @@ try {
         {/* AGENT WORKSPACE */}
         {detailsAgent ? (
   <section className="agent-details-page">
+                <button
+              className="details-back-button"
+              onClick={() => setDetailsAgent(null)}
+            >
+              <ArrowLeft size={18} />
+              Back to Marketplace
+            </button>
+
+            <div className="details-hero">
+              <div
+                className="details-agent-icon"
+                style={{ color: detailsAgent.color }}
+              >
+                {(() => {
+                  const Icon = detailsAgent.icon;
+                  return <Icon size={38} />;
+                })()}
+              </div>
+
+              <p className="details-category">
+                {detailsAgent.category} AI AGENT
+              </p>
+
+              <h1>{detailsAgent.name}</h1>
+
+              <p className="details-description">
+                {detailsAgent.description}
+              </p>
+
+              <button
+                className="details-use-button"
+                onClick={() => {
+                  const agent = detailsAgent;
+                  setDetailsAgent(null);
+                  createNewChat(agent);
+                }}
+              >
+                <Sparkles size={18} />
+                Use This Agent
+                <ArrowUpRight size={18} />
+              </button>
+            </div>
+
+            <div className="details-section">
+              <h2>Key Features</h2>
+              <div className="details-feature-grid">
+                {getAgentDetails(detailsAgent).features.map((feature, index) => (
+                  <div className="details-feature-card" key={index}>
+                    <Check size={19} />
+                    <p>{feature}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="details-section">
+              <h2>What Can You Do With This Agent?</h2>
+              <div className="details-feature-grid">
+                {getAgentDetails(detailsAgent).uses.map((use, index) => (
+                  <div className="details-feature-card" key={index}>
+                    <Sparkles size={19} />
+                    <p>{use}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="chat-notice">
+              Demo version: Live AI responses and backend integration
+              will be added later.
+            </div>
+          </section>
+
+        ) : selectedAgent ? (
+    
 
             <div className="workspace-toolbar">
 
