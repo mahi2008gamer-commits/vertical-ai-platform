@@ -791,6 +791,17 @@ try {
 
                 ))
               )}
+                            {isLoading && (
+                <div className="loading-message">
+                  🤖 AI Agent is thinking...
+                </div>
+              )}
+
+              {chatError && (
+                <div className="error-message">
+                  {chatError}
+                </div>
+              )}
 
             </div>
 
