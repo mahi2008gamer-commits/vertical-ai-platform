@@ -738,9 +738,11 @@ try {
 
           <div className="breadcrumb">
             Platform <span>/</span>
-            {selectedAgent
-              ? selectedAgent.name
-              : "Dashboard"}
+            {detailsAgent
+  ? detailsAgent.name
+  : selectedAgent
+  ? selectedAgent.name
+  : "Dashboard"}
           </div>
 
           <div className="top-actions">
