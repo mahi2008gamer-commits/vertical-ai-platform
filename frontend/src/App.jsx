@@ -826,9 +826,10 @@ try {
           </section>
 
         ) : selectedAgent ? (
-    
 
-            <div className="workspace-toolbar">
+    <section className="chat-page">
+
+    <div className="workspace-toolbar">
 
               <button
                 className="back-button"
