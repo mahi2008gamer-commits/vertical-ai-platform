@@ -989,7 +989,10 @@ try {
 
             </div>
 
-            {/* MESSAGE INPUT */}
+            <div ref={messagesEndRef} />
+</div>
+
+{/* MESSAGE INPUT */}
             <form
               className="chat-input-area"
               onSubmit={sendMessage}
