@@ -994,7 +994,7 @@ try {
 
             </div>
 
-                        <div ref={messagesEndRef} />
+                        
 
             </div>
 
