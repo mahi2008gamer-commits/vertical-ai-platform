@@ -614,7 +614,9 @@ try {
 
         <nav>
           <button
-            className={`nav-item ${!selectedAgent ? "active" : ""}`}
+            className={`nav-item ${
+  !selectedAgent && !detailsAgent ? "active" : ""
+}`}
             onClick={closeAgent}
           >
             <LayoutDashboard size={19} />
