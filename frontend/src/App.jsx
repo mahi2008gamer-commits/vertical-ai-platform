@@ -308,7 +308,7 @@ export default function App() {
   const [copiedId, setCopiedId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 const [chatError, setChatError] = useState("");
-
+const messagesEndRef = useRef(null);
   // Save chats whenever they change
   useEffect(() => {
     try {
