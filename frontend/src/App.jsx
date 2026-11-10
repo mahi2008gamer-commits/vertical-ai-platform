@@ -280,10 +280,21 @@ const [chatError, setChatError] = useState("");
     });
   }
 
-  // Open agent workspace
-  function openAgent(agent) {
-    createNewChat(agent);
-  }
+  // Open agent details page
+function openAgent(agent) {
+  setDetailsAgent(agent);
+  setSelectedAgent(null);
+  setActiveChatId(null);
+  setMessage("");
+  setChatError("");
+  setCopiedId(null);
+  setMobileMenu(false);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
 
   // Open previous conversation
   function openExistingChat(chat) {
