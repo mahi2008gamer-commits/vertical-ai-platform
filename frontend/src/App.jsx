@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getAgentReply } from "./services/agentService";
 import {
   Search, LayoutDashboard, Compass, Bot, Plus,
   ArrowUpRight, Sparkles, Menu, X, Zap,
