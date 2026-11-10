@@ -328,7 +328,26 @@ const [chatError, setChatError] = useState("");
       return;
     }
 
-    const reply = await getAgentReply(selectedAgent.name, question);
+    let reply;
+
+try {
+  setIsLoading(true);
+  setChatError("");
+
+  reply = await getAgentReply(
+    selectedAgent.name,
+    question
+  );
+
+} catch (error) {
+  setChatError(
+    error.message || "Something went wrong. Please try again."
+  );
+  return;
+
+} finally {
+  setIsLoading(false);
+}
     const now = Date.now();
 
     const userMessage = {
