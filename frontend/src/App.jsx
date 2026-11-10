@@ -204,7 +204,96 @@ async function copyText(text) {
     return false;
   }
 }
+// Agent details information
+function getAgentDetails(agent) {
+  const details = {
+    medical: {
+      features: [
+        "General health information",
+        "Medical terms explanation",
+        "Patient support guidance",
+        "Appointment preparation"
+      ],
+      uses: [
+        "Understand common health topics",
+        "Learn medical terminology",
+        "Prepare questions for doctors"
+      ]
+    },
 
+    agriculture: {
+      features: [
+        "Crop planning guidance",
+        "Soil information",
+        "Irrigation suggestions",
+        "Pest awareness"
+      ],
+      uses: [
+        "Plan crop cultivation",
+        "Understand farming methods",
+        "Learn about irrigation"
+      ]
+    },
+
+    finance: {
+      features: [
+        "Budget planning",
+        "Financial concepts",
+        "Business performance insights",
+        "Expense analysis"
+      ],
+      uses: [
+        "Understand business expenses",
+        "Learn financial concepts",
+        "Organize budgets"
+      ]
+    },
+
+    retail: {
+      features: [
+        "Product information",
+        "Customer support guidance",
+        "Retail operations",
+        "Customer FAQ assistance"
+      ],
+      uses: [
+        "Prepare customer responses",
+        "Organize product information",
+        "Improve store operations"
+      ]
+    },
+
+    manufacturing: {
+      features: [
+        "Production planning",
+        "Workflow improvement",
+        "Quality management concepts",
+        "Operational efficiency"
+      ],
+      uses: [
+        "Understand production workflows",
+        "Identify process improvements",
+        "Learn quality management"
+      ]
+    },
+
+    education: {
+      features: [
+        "Concept explanations",
+        "Personalized study guidance",
+        "Practice questions",
+        "Learning assistance"
+      ],
+      uses: [
+        "Understand difficult topics",
+        "Prepare for examinations",
+        "Practice questions"
+      ]
+    }
+  };
+
+  return details[agent.id];
+}
 export default function App() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
