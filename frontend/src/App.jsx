@@ -820,7 +820,7 @@ try {
 
               <button
                 type="submit"
-                disabled={!message.trim() || !activeChat}
+                disabled={!message.trim() || !activeChat || isLoading}
                 aria-label="Send message"
               >
                 <Send size={19} />
