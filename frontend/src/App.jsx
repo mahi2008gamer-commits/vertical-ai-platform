@@ -325,9 +325,14 @@ const messagesContainerRef = useRef(null);
 
   const messages = activeChat?.messages || [];
 useEffect(() => {
-  messagesEndRef.current?.scrollIntoView({
-    behavior: "smooth"
-  });
+  const container = messagesContainerRef.current;
+
+  if (container) {
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth"
+    });
+  }
 }, [messages, isLoading]);
   // Chats belonging to selected agent
   const agentChats = chats
