@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getAgentReply } from "./services/agentService";
 import {
@@ -9,9 +8,8 @@ import {
   MessageSquarePlus, History, Trash2, Copy,
   Check, ChevronDown, Clock, RefreshCw,
   Pencil, Download, Pin, PinOff,
-  MessageSquare, Settings, ShieldCheck,
-  RotateCcw, FileText, Archive,
-  MessagesSquare, Filter, ExternalLink
+  MessageSquare, RotateCcw, MessagesSquare,
+  ExternalLink
 } from "lucide-react";
 
 const STORAGE_KEY = "vertical-ai-phase4-chats";
@@ -303,11 +301,8 @@ function formatTime(timestamp) {
   });
 }
 
-function downloadText(filename, content) {
-  const blob = new Blob([content], {
-    type: "text/plain;charset=utf-8"
-  });
-
+function downloadFile(filename, content, type = "text/plain;charset=utf-8") {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
@@ -355,8 +350,6 @@ export default function App() {
 
   const [showCustomOnly, setShowCustomOnly] = useState(false);
 
-  // PHASE 4 STATES
-
   const [historyMode, setHistoryMode] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
   const [historyFilter, setHistoryFilter] = useState("All");
@@ -366,11 +359,16 @@ export default function App() {
 
   const messagesContainerRef = useRef(null);
 
-  // PERSIST DATA
+  // SAVE DATA
 
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+      setChatError(current =>
+        current === "Storage is full. Export or delete old conversations."
+          ? ""
+          : current
+      );
     } catch (error) {
       console.error("Chat saving error:", error);
       setChatError("Storage is full. Export or delete old conversations.");
@@ -381,9 +379,7 @@ export default function App() {
     try {
       localStorage.setItem(
         CUSTOM_AGENTS_KEY,
-        JSON.stringify(
-          customAgents.map(({ icon, ...agent }) => agent)
-        )
+        JSON.stringify(customAgents.map(({ icon, ...agent }) => agent))
       );
     } catch (error) {
       console.error("Agent saving error:", error);
@@ -392,19 +388,13 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(
-        PINNED_KEY,
-        JSON.stringify(pinnedChats)
-      );
+      localStorage.setItem(PINNED_KEY, JSON.stringify(pinnedChats));
     } catch (error) {
       console.error("Pinned chat saving error:", error);
     }
   }, [pinnedChats]);
 
-  const activeChat = chats.find(
-    chat => chat.id === activeChatId
-  );
-
+  const activeChat = chats.find(chat => chat.id === activeChatId);
   const messages = activeChat?.messages || [];
 
   useEffect(() => {
@@ -425,42 +415,32 @@ export default function App() {
     0
   );
 
-  const totalUserMessages = chats.reduce(
-    (total, chat) =>
-      total + chat.messages.filter(item => item.role === "user").length,
-    0
-  );
-
   // AGENT FILTERING
 
   const filteredAgents = allAgents.filter(agent => {
     const term = search.toLowerCase().trim();
 
     const matchesCategory =
-      activeCategory === "All" ||
-      agent.category === activeCategory;
+      activeCategory === "All" || agent.category === activeCategory;
 
     const matchesSearch =
       agent.name.toLowerCase().includes(term) ||
       agent.category.toLowerCase().includes(term) ||
       agent.description.toLowerCase().includes(term);
 
-    const matchesType =
-      !showCustomOnly || agent.isCustom;
+    const matchesType = !showCustomOnly || agent.isCustom;
 
     return matchesCategory && matchesSearch && matchesType;
   });
 
-  // GLOBAL CHAT HISTORY
+  // GLOBAL HISTORY
 
   const globalHistory = useMemo(() => {
     const term = historySearch.toLowerCase().trim();
 
     return [...chats]
       .filter(chat => {
-        const agent = allAgents.find(
-          item => item.id === chat.agentId
-        );
+        const agent = allAgents.find(item => item.id === chat.agentId);
 
         const matchesAgent =
           historyFilter === "All" ||
@@ -472,10 +452,10 @@ export default function App() {
           ...chat.messages.map(item => item.text)
         ].join(" ").toLowerCase();
 
-        const matchesSearch =
-          !term || searchableText.includes(term);
-
-        return matchesAgent && matchesSearch;
+        return (
+          matchesAgent &&
+          (!term || searchableText.includes(term))
+        );
       })
       .sort((a, b) => {
         const aPinned = pinnedChats.includes(a.id);
@@ -499,7 +479,7 @@ export default function App() {
         return Number(bPinned) - Number(aPinned);
       }
 
-      return b.updatedAt - a.updatedAt;
+      return (b.updatedAt || 0) - (a.updatedAt || 0);
     });
 
   // NAVIGATION
@@ -515,7 +495,6 @@ export default function App() {
     setIsLoading(false);
     setChatSearch("");
     setShowChatSearch(false);
-
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -527,7 +506,6 @@ export default function App() {
     setMessage("");
     setChatError("");
     setMobileMenu(false);
-
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -568,15 +546,11 @@ export default function App() {
     setMessage("");
     setChatError("");
     setMobileMenu(false);
-
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function openExistingChat(chat) {
-    const agent = allAgents.find(
-      item => item.id === chat.agentId
-    );
-
+    const agent = allAgents.find(item => item.id === chat.agentId);
     if (!agent) return;
 
     setSelectedAgent(agent);
@@ -596,7 +570,7 @@ export default function App() {
     showDashboard();
   }
 
-  // PIN CONVERSATIONS
+  // PIN CHATS
 
   function togglePin(chatId) {
     setPinnedChats(previous =>
@@ -606,30 +580,24 @@ export default function App() {
     );
   }
 
-  // CUSTOM AGENT MANAGEMENT
+  // CUSTOM AGENT EDIT
 
   function handleEditCustomAgent(agent) {
     if (!agent.isCustom) return;
 
-    const name = window.prompt(
-      "Enter new agent name:",
-      agent.name
-    );
-
+    const name = window.prompt("Enter new agent name:", agent.name);
     if (name === null) return;
 
     const description = window.prompt(
       "Enter new description:",
       agent.description
     );
-
     if (description === null) return;
 
     const instructions = window.prompt(
       "Enter new agent instructions:",
       agent.instructions || ""
     );
-
     if (instructions === null) return;
 
     const cleanName = name.trim();
@@ -650,10 +618,9 @@ export default function App() {
       return;
     }
 
-    const duplicate = allAgents.some(
-      item =>
-        item.id !== agent.id &&
-        item.name.toLowerCase() === cleanName.toLowerCase()
+    const duplicate = allAgents.some(item =>
+      item.id !== agent.id &&
+      item.name.toLowerCase() === cleanName.toLowerCase()
     );
 
     if (duplicate) {
@@ -674,16 +641,13 @@ export default function App() {
       )
     );
 
-    if (detailsAgent?.id === agent.id) {
-      setDetailsAgent(updatedAgent);
-    }
-
-    if (selectedAgent?.id === agent.id) {
-      setSelectedAgent(updatedAgent);
-    }
+    if (detailsAgent?.id === agent.id) setDetailsAgent(updatedAgent);
+    if (selectedAgent?.id === agent.id) setSelectedAgent(updatedAgent);
 
     alert("Custom agent updated successfully!");
   }
+
+  // CUSTOM AGENT DELETE
 
   function handleDeleteCustomAgent(agent) {
     if (!agent.isCustom) return;
@@ -694,6 +658,10 @@ export default function App() {
 
     if (!confirmed) return;
 
+    const deletedChatIds = chats
+      .filter(chat => chat.agentId === agent.id)
+      .map(chat => chat.id);
+
     setCustomAgents(previous =>
       previous.filter(item => item.id !== agent.id)
     );
@@ -703,11 +671,7 @@ export default function App() {
     );
 
     setPinnedChats(previous =>
-      previous.filter(id =>
-        chats.some(chat =>
-          chat.id === id && chat.agentId !== agent.id
-        )
-      )
+      previous.filter(id => !deletedChatIds.includes(id))
     );
 
     if (
@@ -720,7 +684,7 @@ export default function App() {
     alert("Custom agent deleted successfully!");
   }
 
-  // CUSTOM AGENT BUILDER
+  // CREATE CUSTOM AGENT
 
   function handleCreateAgent(e) {
     e.preventDefault();
@@ -778,7 +742,7 @@ export default function App() {
     openAgent(newAgent);
   }
 
-  // CHAT OPERATIONS
+  // SEND MESSAGE WITH FULL CONVERSATION HISTORY
 
   async function sendMessage(e) {
     e.preventDefault();
@@ -788,6 +752,9 @@ export default function App() {
     const chatId = activeChatId;
 
     if (!question || !agent || !chatId || isLoading) return;
+
+    const currentChat = chats.find(chat => chat.id === chatId);
+    const conversationHistory = currentChat?.messages || [];
 
     const now = Date.now();
 
@@ -809,8 +776,7 @@ export default function App() {
         return {
           ...chat,
           title: firstUserMessage
-            ? question.slice(0, 35) +
-              (question.length > 35 ? "..." : "")
+            ? question.slice(0, 35) + (question.length > 35 ? "..." : "")
             : chat.title,
           updatedAt: now,
           messages: [...chat.messages, userMessage]
@@ -826,7 +792,8 @@ export default function App() {
       const result = await getAgentReply(
         agent.name,
         question,
-        agent.instructions || ""
+        agent.instructions || "",
+        conversationHistory
       );
 
       const reply =
@@ -858,15 +825,61 @@ export default function App() {
       );
     } catch (error) {
       console.error("AI response error:", error);
-
       setChatError(
-        error?.message ||
-        "Unable to connect to AI. Please try again."
+        error?.message || "Unable to connect to AI. Please try again."
       );
     } finally {
       setIsLoading(false);
     }
   }
+
+  // EDIT USER MESSAGE
+
+  function editUserMessage(item) {
+    if (!activeChatId || isLoading || item.role !== "user") return;
+
+    const updatedText = window.prompt("Edit your message:", item.text);
+    if (updatedText === null) return;
+
+    const cleanText = updatedText.trim();
+
+    if (!cleanText) {
+      alert("Message cannot be empty.");
+      return;
+    }
+
+    setChats(previous =>
+      previous.map(chat => {
+        if (chat.id !== activeChatId) return chat;
+
+        const messageIndex = chat.messages.findIndex(
+          messageItem => messageItem.id === item.id
+        );
+
+        if (messageIndex === -1) return chat;
+
+        // Remove old replies after the edited user message.
+        const updatedMessages = chat.messages
+          .slice(0, messageIndex + 1)
+          .map(messageItem =>
+            messageItem.id === item.id
+              ? { ...messageItem, text: cleanText, edited: true }
+              : messageItem
+          );
+
+        return {
+          ...chat,
+          messages: updatedMessages,
+          updatedAt: Date.now()
+        };
+      })
+    );
+
+    setChatError("");
+    setMessage(cleanText);
+  }
+
+  // DELETE MESSAGE
 
   function deleteMessage(messageId) {
     if (!activeChatId || isLoading) return;
@@ -885,6 +898,8 @@ export default function App() {
       )
     );
   }
+
+  // CLEAR CURRENT CHAT
 
   function clearCurrentChat() {
     if (!activeChatId || !selectedAgent || isLoading) return;
@@ -912,6 +927,8 @@ export default function App() {
     setCopiedId(null);
   }
 
+  // DELETE CHAT
+
   function deleteChat(chatId) {
     if (isLoading && chatId === activeChatId) {
       alert("Please wait until the AI response finishes.");
@@ -925,7 +942,7 @@ export default function App() {
     const remainingChats = chats
       .filter(chat => chat.id !== chatId)
       .filter(chat => chat.agentId === selectedAgent?.id)
-      .sort((a, b) => b.updatedAt - a.updatedAt);
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
     setChats(previous =>
       previous.filter(chat => chat.id !== chatId)
@@ -946,12 +963,10 @@ export default function App() {
     }
   }
 
-  function renameChat(chat) {
-    const title = window.prompt(
-      "Enter conversation name:",
-      chat.title
-    );
+  // RENAME CHAT
 
+  function renameChat(chat) {
+    const title = window.prompt("Enter conversation name:", chat.title);
     if (title === null) return;
 
     const cleanTitle = title.trim();
@@ -969,15 +984,13 @@ export default function App() {
     setChats(previous =>
       previous.map(item =>
         item.id === chat.id
-          ? {
-              ...item,
-              title: cleanTitle,
-              updatedAt: Date.now()
-            }
+          ? { ...item, title: cleanTitle, updatedAt: Date.now() }
           : item
       )
     );
   }
+
+  // DELETE ALL CHATS
 
   function clearAllChats() {
     if (isLoading) {
@@ -1001,6 +1014,8 @@ export default function App() {
     setChatError("");
   }
 
+  // COPY MESSAGE
+
   async function copyMessage(item) {
     const success = await copyText(item.text);
 
@@ -1008,16 +1023,14 @@ export default function App() {
       setCopiedId(item.id);
 
       setTimeout(() => {
-        setCopiedId(current =>
-          current === item.id ? null : current
-        );
+        setCopiedId(current => current === item.id ? null : current);
       }, 1800);
     } else {
       alert("Could not copy this message.");
     }
   }
 
-  // IMPROVED REGENERATE
+  // REGENERATE RESPONSE WITH HISTORY
 
   async function regenerateResponse() {
     if (!activeChat || !selectedAgent || isLoading) return;
@@ -1029,12 +1042,11 @@ export default function App() {
     if (lastUserIndex === -1) return;
 
     const lastUserMessage = activeChat.messages[lastUserIndex];
-
     const chatId = activeChat.id;
     const question = lastUserMessage.text;
     const agent = selectedAgent;
 
-    // Remove old AI messages after the last user message.
+    const conversationHistory = activeChat.messages.slice(0, lastUserIndex);
 
     setChats(previous =>
       previous.map(chat =>
@@ -1054,7 +1066,8 @@ export default function App() {
       const result = await getAgentReply(
         agent.name,
         question,
-        agent.instructions || ""
+        agent.instructions || "",
+        conversationHistory
       );
 
       const reply =
@@ -1093,14 +1106,12 @@ export default function App() {
     }
   }
 
-  // EXPORT SINGLE CONVERSATION
+  // EXPORT ONE CHAT
 
   function exportConversation(chat) {
     if (!chat) return;
 
-    const agent = allAgents.find(
-      item => item.id === chat.agentId
-    );
+    const agent = allAgents.find(item => item.id === chat.agentId);
 
     const content = [
       "VERTICAL AI PLATFORM",
@@ -1113,13 +1124,13 @@ export default function App() {
       )
     ].join("\n");
 
-    downloadText(
+    downloadFile(
       `vertical-ai-${chat.title.replace(/[^a-z0-9]/gi, "-")}.txt`,
       content
     );
   }
 
-  // EXPORT ALL CONVERSATIONS
+  // EXPORT ALL CHATS AS TXT
 
   function exportAllChats() {
     if (!chats.length) {
@@ -1128,9 +1139,7 @@ export default function App() {
     }
 
     const content = chats.map(chat => {
-      const agent = allAgents.find(
-        item => item.id === chat.agentId
-      );
+      const agent = allAgents.find(item => item.id === chat.agentId);
 
       return [
         `AGENT: ${agent?.name || "Unknown"}`,
@@ -1143,7 +1152,26 @@ export default function App() {
       ].join("\n");
     }).join("\n\n============================\n\n");
 
-    downloadText("vertical-ai-all-conversations.txt", content);
+    downloadFile("vertical-ai-all-conversations.txt", content);
+  }
+
+  // EXPORT JSON BACKUP
+
+  function exportAllChatsJSON() {
+    const backup = {
+      app: "Vertical AI Platform",
+      version: "5.0",
+      exportedAt: new Date().toISOString(),
+      agents: customAgents.map(({ icon, ...agent }) => agent),
+      chats,
+      pinnedChats
+    };
+
+    downloadFile(
+      "vertical-ai-backup.json",
+      JSON.stringify(backup, null, 2),
+      "application/json;charset=utf-8"
+    );
   }
 
   // AGENT CARD
@@ -1154,46 +1182,29 @@ export default function App() {
     return (
       <article className="agent-card" key={agent.id}>
         <div className="agent-top">
-          <div
-            className="agent-icon"
-            style={{ color: agent.color }}
-          >
+          <div className="agent-icon" style={{ color: agent.color }}>
             <Icon size={27} />
           </div>
-
-          <span className="agent-status">
-            {agent.status}
-          </span>
+          <span className="agent-status">{agent.status}</span>
         </div>
 
         <p className="agent-category">{agent.category}</p>
         <h3>{agent.name}</h3>
 
-        <p className="agent-description">
-          {agent.description}
-        </p>
+        <p className="agent-description">{agent.description}</p>
 
-        <button
-          className="agent-link"
-          onClick={() => openAgent(agent)}
-        >
+        <button className="agent-link" onClick={() => openAgent(agent)}>
           Explore Agent
           <ArrowUpRight size={16} />
         </button>
 
         {agent.isCustom && (
           <div className="agent-management-actions">
-            <button
-              type="button"
-              onClick={() => handleEditCustomAgent(agent)}
-            >
+            <button type="button" onClick={() => handleEditCustomAgent(agent)}>
               <Pencil size={15} /> Edit
             </button>
 
-            <button
-              type="button"
-              onClick={() => handleDeleteCustomAgent(agent)}
-            >
+            <button type="button" onClick={() => handleDeleteCustomAgent(agent)}>
               <Trash2 size={15} /> Delete
             </button>
           </div>
@@ -1231,11 +1242,8 @@ export default function App() {
       {/* SIDEBAR */}
 
       <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
-
         <div className="brand">
-          <div className="brand-icon">
-            <Bot size={25} />
-          </div>
+          <div className="brand-icon"><Bot size={25} /></div>
 
           <span>
             Vertical<span className="brand-light">AI</span>
@@ -1255,9 +1263,7 @@ export default function App() {
         <nav>
           <button
             className={`nav-item ${
-              !selectedAgent && !detailsAgent && !historyMode
-                ? "active"
-                : ""
+              !selectedAgent && !detailsAgent && !historyMode ? "active" : ""
             }`}
             onClick={showDashboard}
           >
@@ -1265,10 +1271,7 @@ export default function App() {
             Dashboard
           </button>
 
-          <button
-            className="nav-item"
-            onClick={() => navigateTo("agents")}
-          >
+          <button className="nav-item" onClick={() => navigateTo("agents")}>
             <Compass size={19} />
             Explore Agents
           </button>
@@ -1281,25 +1284,16 @@ export default function App() {
             All Conversations
           </button>
 
-          <button
-            className="nav-item"
-            onClick={() => navigateTo("create")}
-          >
+          <button className="nav-item" onClick={() => navigateTo("create")}>
             <Plus size={19} />
             Create AI Agent
           </button>
         </nav>
 
-        {/* CHAT HISTORY */}
-
         {selectedAgent && (
           <div className="history-panel">
-
             <div className="history-title">
-              <span>
-                <History size={16} />
-                Chat History
-              </span>
+              <span><History size={16} /> Chat History</span>
 
               <button
                 title="New Chat"
@@ -1310,11 +1304,8 @@ export default function App() {
             </div>
 
             <div className="history-list">
-
               {agentChats.length === 0 ? (
-                <p className="history-empty">
-                  No conversations yet.
-                </p>
+                <p className="history-empty">No conversations yet.</p>
               ) : (
                 agentChats.map(chat => (
                   <div
@@ -1362,14 +1353,10 @@ export default function App() {
                   </div>
                 ))
               )}
-
             </div>
 
             {agentChats.length > 0 && (
-              <button
-                className="clear-history-button"
-                onClick={clearAllChats}
-              >
+              <button className="clear-history-button" onClick={clearAllChats}>
                 <Trash2 size={14} />
                 Clear All History
               </button>
@@ -1378,14 +1365,10 @@ export default function App() {
         )}
 
         <div className="sidebar-bottom">
-
           <div className="upgrade-card">
             <Sparkles size={23} />
             <h3>Build with AI</h3>
-
-            <p>
-              Create intelligent agents for your business.
-            </p>
+            <p>Create intelligent agents for your business.</p>
 
             <button onClick={() => navigateTo("create")}>
               Get Started
@@ -1393,19 +1376,14 @@ export default function App() {
             </button>
           </div>
 
-          <p className="version">
-            VERTICAL AI PLATFORM · V4.0
-          </p>
-
+          <p className="version">VERTICAL AI PLATFORM · V5.0</p>
         </div>
       </aside>
 
       {/* MAIN CONTENT */}
 
       <main className="main-content">
-
         <header className="topbar">
-
           <button
             className="menu-button"
             onClick={() => setMobileMenu(!mobileMenu)}
@@ -1431,25 +1409,18 @@ export default function App() {
             <span className="online-text">System Online</span>
             <div className="avatar">V</div>
           </div>
-
         </header>
 
         {/* AGENT DETAILS */}
 
         {detailsAgent ? (
-
           <section className="agent-details-page">
-
-            <button
-              className="details-back-button"
-              onClick={closeAgent}
-            >
+            <button className="details-back-button" onClick={closeAgent}>
               <ArrowLeft size={18} />
               Back to Marketplace
             </button>
 
             <div className="details-hero">
-
               <div
                 className="details-agent-icon"
                 style={{ color: detailsAgent.color }}
@@ -1465,10 +1436,7 @@ export default function App() {
               </p>
 
               <h1>{detailsAgent.name}</h1>
-
-              <p className="details-description">
-                {detailsAgent.description}
-              </p>
+              <p className="details-description">{detailsAgent.description}</p>
 
               <button
                 className="details-use-button"
@@ -1481,22 +1449,15 @@ export default function App() {
 
               {detailsAgent.isCustom && (
                 <div className="agent-management-actions details-management">
-                  <button
-                    onClick={() => handleEditCustomAgent(detailsAgent)}
-                  >
-                    <Pencil size={16} />
-                    Edit Agent
+                  <button onClick={() => handleEditCustomAgent(detailsAgent)}>
+                    <Pencil size={16} /> Edit Agent
                   </button>
 
-                  <button
-                    onClick={() => handleDeleteCustomAgent(detailsAgent)}
-                  >
-                    <Trash2 size={16} />
-                    Delete Agent
+                  <button onClick={() => handleDeleteCustomAgent(detailsAgent)}>
+                    <Trash2 size={16} /> Delete Agent
                   </button>
                 </div>
               )}
-
             </div>
 
             <div className="details-section">
@@ -1504,10 +1465,7 @@ export default function App() {
 
               <div className="details-feature-grid">
                 {detailInfo.features.map((feature, index) => (
-                  <div
-                    className="details-feature-card"
-                    key={index}
-                  >
+                  <div className="details-feature-card" key={index}>
                     <Check size={19} />
                     <p>{feature}</p>
                   </div>
@@ -1520,10 +1478,7 @@ export default function App() {
 
               <div className="details-feature-grid">
                 {detailInfo.uses.map((use, index) => (
-                  <div
-                    className="details-feature-card"
-                    key={index}
-                  >
+                  <div className="details-feature-card" key={index}>
                     <Sparkles size={19} />
                     <p>{use}</p>
                   </div>
@@ -1541,7 +1496,6 @@ export default function App() {
             <div className="chat-notice">
               AI responses and backend integration can be connected through the agent service.
             </div>
-
           </section>
 
         ) : selectedAgent ? (
@@ -1549,19 +1503,13 @@ export default function App() {
           /* CHAT WORKSPACE */
 
           <section className="chat-page">
-
             <div className="workspace-toolbar">
-
-              <button
-                className="back-button"
-                onClick={closeAgent}
-              >
+              <button className="back-button" onClick={closeAgent}>
                 <ArrowLeft size={18} />
                 Dashboard
               </button>
 
               <div className="workspace-toolbar-actions">
-
                 <button
                   className="new-chat-button"
                   onClick={() => createNewChat(selectedAgent)}
@@ -1597,12 +1545,10 @@ export default function App() {
                     </button>
                   </>
                 )}
-
               </div>
             </div>
 
             <div className="chat-heading">
-
               <div
                 className="chat-agent-icon"
                 style={{ color: selectedAgent.color }}
@@ -1619,10 +1565,7 @@ export default function App() {
               </div>
 
               <span className="demo-badge">DEMO</span>
-
             </div>
-
-            {/* SEARCH INSIDE CHAT */}
 
             {showChatSearch && (
               <div className="search-box">
@@ -1646,7 +1589,6 @@ export default function App() {
             )}
 
             <div className="agent-switcher">
-
               <label htmlFor="agent-switch">
                 <Bot size={16} />
                 Switch Agent
@@ -1673,7 +1615,6 @@ export default function App() {
 
                 <ChevronDown size={16} />
               </div>
-
             </div>
 
             <div className="chat-notice">
@@ -1687,36 +1628,26 @@ export default function App() {
               ref={messagesContainerRef}
               aria-live="polite"
             >
-
               {messages.filter(item =>
                 !chatSearch.trim() ||
-                item.text.toLowerCase().includes(
-                  chatSearch.toLowerCase()
-                )
+                item.text.toLowerCase().includes(chatSearch.toLowerCase())
               ).length === 0 ? (
-
                 <p className="history-empty">
                   {chatSearch
                     ? "No matching messages found."
                     : "No messages in this conversation. Send a message to start."}
                 </p>
-
               ) : (
-
                 messages
                   .filter(item =>
                     !chatSearch.trim() ||
-                    item.text.toLowerCase().includes(
-                      chatSearch.toLowerCase()
-                    )
+                    item.text.toLowerCase().includes(chatSearch.toLowerCase())
                   )
                   .map(item => (
-
                     <div
                       className={`message-row ${item.role}`}
                       key={item.id}
                     >
-
                       <div className="message-avatar">
                         {item.role === "assistant"
                           ? <Bot size={18} />
@@ -1724,13 +1655,11 @@ export default function App() {
                       </div>
 
                       <div className="message-content">
-
                         <div className="message-bubble">
                           <p>{item.text}</p>
                         </div>
 
                         <div className="message-actions">
-
                           {item.createdAt && (
                             <span className="message-time">
                               <Clock size={12} />
@@ -1738,16 +1667,27 @@ export default function App() {
                             </span>
                           )}
 
-                          <button
-                            onClick={() => copyMessage(item)}
-                            title="Copy message"
-                          >
+                          {item.edited && (
+                            <span className="message-time">Edited</span>
+                          )}
+
+                          <button onClick={() => copyMessage(item)} title="Copy message">
                             {copiedId === item.id
                               ? <Check size={14} />
                               : <Copy size={14} />}
-
                             {copiedId === item.id ? "Copied" : "Copy"}
                           </button>
+
+                          {item.role === "user" && (
+                            <button
+                              onClick={() => editUserMessage(item)}
+                              disabled={isLoading}
+                              title="Edit message"
+                            >
+                              <Pencil size={14} />
+                              Edit
+                            </button>
+                          )}
 
                           <button
                             onClick={() => deleteMessage(item.id)}
@@ -1757,14 +1697,10 @@ export default function App() {
                             <Trash2 size={14} />
                             Delete
                           </button>
-
                         </div>
                       </div>
-
                     </div>
-
                   ))
-
               )}
 
               {isLoading && (
@@ -1788,16 +1724,11 @@ export default function App() {
                   </button>
                 </div>
               )}
-
             </div>
 
             {/* MESSAGE INPUT */}
 
-            <form
-              className="chat-input-area"
-              onSubmit={sendMessage}
-            >
-
+            <form className="chat-input-area" onSubmit={sendMessage}>
               <input
                 value={message}
                 onChange={e => setMessage(e.target.value)}
@@ -1808,20 +1739,14 @@ export default function App() {
 
               <button
                 type="submit"
-                disabled={
-                  !message.trim() ||
-                  !activeChat ||
-                  isLoading
-                }
+                disabled={!message.trim() || !activeChat || isLoading}
                 aria-label="Send message"
               >
                 <Send size={19} />
               </button>
-
             </form>
 
             <div className="workspace-bottom-actions">
-
               <button
                 onClick={clearCurrentChat}
                 disabled={!activeChat || isLoading}
@@ -1842,33 +1767,25 @@ export default function App() {
               </button>
 
               {activeChat && (
-                <button
-                  onClick={() => togglePin(activeChat.id)}
-                >
+                <button onClick={() => togglePin(activeChat.id)}>
                   {pinnedChats.includes(activeChat.id)
                     ? <PinOff size={15} />
                     : <Pin size={15} />}
-
-                  {pinnedChats.includes(activeChat.id)
-                    ? "Unpin"
-                    : "Pin Chat"}
+                  {pinnedChats.includes(activeChat.id) ? "Unpin" : "Pin Chat"}
                 </button>
               )}
-
             </div>
 
             <p className="chat-footer">
-              Vertical AI Platform · Agent Workspace V4.0
+              Vertical AI Platform · Agent Workspace V5.0
             </p>
-
           </section>
 
         ) : historyMode ? (
 
-          /* GLOBAL HISTORY PAGE */
+          /* GLOBAL HISTORY */
 
           <section className="agents-section">
-
             <div className="section-heading">
               <div>
                 <p className="eyebrow">YOUR WORKSPACE</p>
@@ -1876,14 +1793,25 @@ export default function App() {
                 <p>Manage conversations from all your AI agents.</p>
               </div>
 
-              <button
-                className="primary-button"
-                onClick={exportAllChats}
-                disabled={!chats.length}
-              >
-                <Download size={17} />
-                Export All
-              </button>
+              <div className="workspace-toolbar-actions">
+                <button
+                  className="primary-button"
+                  onClick={exportAllChats}
+                  disabled={!chats.length}
+                >
+                  <Download size={17} />
+                  Export All TXT
+                </button>
+
+                <button
+                  className="secondary-button"
+                  onClick={exportAllChatsJSON}
+                  disabled={!chats.length}
+                >
+                  <Archive size={17} />
+                  JSON Backup
+                </button>
+              </div>
             </div>
 
             <div className="search-box">
@@ -1919,19 +1847,12 @@ export default function App() {
             </div>
 
             <div className="agent-filter-actions">
-              <span>
-                {globalHistory.length} conversations found
-              </span>
-
-              <span>
-                {pinnedChats.length} pinned
-              </span>
+              <span>{globalHistory.length} conversations found</span>
+              <span>{pinnedChats.length} pinned</span>
             </div>
 
             <div className="global-history-list">
-
               {globalHistory.length === 0 ? (
-
                 <div className="empty-message">
                   <MessagesSquare size={35} />
                   <h3>No conversations found</h3>
@@ -1944,25 +1865,17 @@ export default function App() {
                     Explore Agents
                   </button>
                 </div>
-
               ) : (
-
                 globalHistory.map(chat => {
                   const agent = allAgents.find(
                     item => item.id === chat.agentId
                   );
 
                   const Icon = agent?.icon || Bot;
-
-                  const lastMessage =
-                    chat.messages[chat.messages.length - 1];
+                  const lastMessage = chat.messages[chat.messages.length - 1];
 
                   return (
-                    <div
-                      className="global-history-card"
-                      key={chat.id}
-                    >
-
+                    <div className="global-history-card" key={chat.id}>
                       <div
                         className="chat-agent-icon"
                         style={{ color: agent?.color || "#a78bfa" }}
@@ -1971,13 +1884,10 @@ export default function App() {
                       </div>
 
                       <div className="global-history-info">
-
                         <div className="global-history-heading">
                           <h3>{chat.title}</h3>
 
-                          {pinnedChats.includes(chat.id) && (
-                            <Pin size={14} />
-                          )}
+                          {pinnedChats.includes(chat.id) && <Pin size={14} />}
                         </div>
 
                         <p>
@@ -1994,11 +1904,9 @@ export default function App() {
                             chat.updatedAt || chat.createdAt
                           ).toLocaleString()}
                         </small>
-
                       </div>
 
                       <div className="global-history-actions">
-
                         <button
                           title="Open conversation"
                           onClick={() => openExistingChat(chat)}
@@ -2035,15 +1943,11 @@ export default function App() {
                         >
                           <Trash2 size={17} />
                         </button>
-
                       </div>
-
                     </div>
                   );
                 })
-
               )}
-
             </div>
 
             <div className="workspace-bottom-actions">
@@ -2052,7 +1956,6 @@ export default function App() {
                 Delete All Conversations
               </button>
             </div>
-
           </section>
 
         ) : (
@@ -2060,11 +1963,8 @@ export default function App() {
           /* DASHBOARD */
 
           <>
-
             <section className="welcome-section" id="dashboard">
-
               <div>
-
                 <div className="eyebrow">
                   <Sparkles size={15} />
                   THE FUTURE OF BUSINESS AI
@@ -2091,41 +1991,25 @@ export default function App() {
                     Create Your Agent
                   </a>
                 </div>
-
               </div>
 
               <div className="hero-visual">
                 <div className="orbit orbit-one"></div>
                 <div className="orbit orbit-two"></div>
 
-                <div className="hero-core">
-                  <Bot size={65} />
-                </div>
+                <div className="hero-core"><Bot size={65} /></div>
 
-                <div className="floating-icon icon-one">
-                  <HeartPulse />
-                </div>
-
-                <div className="floating-icon icon-two">
-                  <Sprout />
-                </div>
-
-                <div className="floating-icon icon-three">
-                  <Landmark />
-                </div>
+                <div className="floating-icon icon-one"><HeartPulse /></div>
+                <div className="floating-icon icon-two"><Sprout /></div>
+                <div className="floating-icon icon-three"><Landmark /></div>
               </div>
-
             </section>
 
-            {/* LIVE STATISTICS */}
+            {/* STATISTICS */}
 
             <section className="stats-grid">
-
               <div className="stat-card">
-                <div className="stat-icon purple">
-                  <Bot />
-                </div>
-
+                <div className="stat-icon purple"><Bot /></div>
                 <div>
                   <p>AI AGENTS</p>
                   <h2>{String(allAgents.length).padStart(2, "0")}</h2>
@@ -2133,10 +2017,7 @@ export default function App() {
               </div>
 
               <div className="stat-card">
-                <div className="stat-icon green">
-                  <MessagesSquare />
-                </div>
-
+                <div className="stat-icon green"><MessagesSquare /></div>
                 <div>
                   <p>CONVERSATIONS</p>
                   <h2>{String(chats.length).padStart(2, "0")}</h2>
@@ -2144,10 +2025,7 @@ export default function App() {
               </div>
 
               <div className="stat-card">
-                <div className="stat-icon blue">
-                  <MessageSquare />
-                </div>
-
+                <div className="stat-icon blue"><MessageSquare /></div>
                 <div>
                   <p>TOTAL MESSAGES</p>
                   <h2>{String(totalMessages).padStart(2, "0")}</h2>
@@ -2155,23 +2033,18 @@ export default function App() {
               </div>
 
               <div className="stat-card">
-                <div className="stat-icon purple">
-                  <Zap />
-                </div>
-
+                <div className="stat-icon purple"><Zap /></div>
                 <div>
                   <p>INDUSTRIES</p>
                   <h2>06</h2>
                 </div>
               </div>
-
             </section>
 
-            {/* QUICK HISTORY */}
+            {/* RECENT CONVERSATIONS */}
 
             {chats.length > 0 && (
               <section className="agents-section">
-
                 <div className="section-heading">
                   <div>
                     <p className="eyebrow">RECENT ACTIVITY</p>
@@ -2189,7 +2062,6 @@ export default function App() {
                 </div>
 
                 <div className="global-history-list">
-
                   {[...chats]
                     .sort((a, b) =>
                       (b.updatedAt || 0) - (a.updatedAt || 0)
@@ -2203,10 +2075,7 @@ export default function App() {
                       const Icon = agent?.icon || Bot;
 
                       return (
-                        <div
-                          className="global-history-card"
-                          key={chat.id}
-                        >
+                        <div className="global-history-card" key={chat.id}>
                           <div
                             className="chat-agent-icon"
                             style={{ color: agent?.color || "#a78bfa" }}
@@ -2234,7 +2103,6 @@ export default function App() {
                         </div>
                       );
                     })}
-
                 </div>
               </section>
             )}
@@ -2242,7 +2110,6 @@ export default function App() {
             {/* AGENT MARKETPLACE */}
 
             <section className="agents-section" id="agents">
-
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">AI MARKETPLACE</p>
@@ -2285,28 +2152,19 @@ export default function App() {
               </div>
 
               <div className="agent-filter-actions">
-
                 <button
                   className={
-                    showCustomOnly
-                      ? "category active-category"
-                      : "category"
+                    showCustomOnly ? "category active-category" : "category"
                   }
                   onClick={() => setShowCustomOnly(!showCustomOnly)}
                 >
-                  {showCustomOnly
-                    ? "Showing My Agents"
-                    : "My Custom Agents"}
+                  {showCustomOnly ? "Showing My Agents" : "My Custom Agents"}
                 </button>
 
-                <span>
-                  {filteredAgents.length} agents found
-                </span>
-
+                <span>{filteredAgents.length} agents found</span>
               </div>
 
               <div className="agents-grid">
-
                 {filteredAgents.map(agent => (
                   <AgentCard agent={agent} key={agent.id} />
                 ))}
@@ -2316,23 +2174,17 @@ export default function App() {
                     No agents found. Try another search.
                   </p>
                 )}
-
               </div>
-
             </section>
 
-            {/* CUSTOM AGENT BUILDER */}
+            {/* CREATE AGENT INTRO */}
 
             <section className="create-section" id="create">
-
-              <div className="create-icon">
-                <Sparkles size={30} />
-              </div>
+              <div className="create-icon"><Sparkles size={30} /></div>
 
               <div>
                 <p className="eyebrow">BUILD YOUR OWN</p>
                 <h2>Create Your Custom AI Agent</h2>
-
                 <p>
                   Design an intelligent assistant tailored to your business needs.
                 </p>
@@ -2349,17 +2201,14 @@ export default function App() {
                 <Plus size={18} />
                 Create Agent
               </button>
-
             </section>
 
-            <section className="create-section" id="agent-builder">
+            {/* CUSTOM AGENT BUILDER */}
 
-              <div className="create-icon">
-                <Bot size={30} />
-              </div>
+            <section className="create-section" id="agent-builder">
+              <div className="create-icon"><Bot size={30} /></div>
 
               <div style={{ width: "100%" }}>
-
                 <p className="eyebrow">CUSTOM AGENT BUILDER</p>
                 <h2>Build Your Own AI Agent</h2>
 
@@ -2367,14 +2216,9 @@ export default function App() {
                   Enter details and instructions for your personalized assistant.
                 </p>
 
-                <form
-                  onSubmit={handleCreateAgent}
-                  className="agent-builder-form"
-                >
-
+                <form onSubmit={handleCreateAgent} className="agent-builder-form">
                   <label>
                     Agent Name
-
                     <input
                       value={agentName}
                       onChange={e => setAgentName(e.target.value)}
@@ -2386,7 +2230,6 @@ export default function App() {
 
                   <label>
                     Industry
-
                     <select
                       value={agentCategory}
                       onChange={e => setAgentCategory(e.target.value)}
@@ -2403,7 +2246,6 @@ export default function App() {
 
                   <label>
                     Agent Description
-
                     <textarea
                       value={agentDescription}
                       onChange={e => setAgentDescription(e.target.value)}
@@ -2416,7 +2258,6 @@ export default function App() {
 
                   <label>
                     Agent Instructions
-
                     <textarea
                       value={agentInstructions}
                       onChange={e => setAgentInstructions(e.target.value)}
@@ -2426,45 +2267,28 @@ export default function App() {
                       required
                     />
 
-                    <small>
-                      Maximum 1000 characters.
-                    </small>
+                    <small>Maximum 1000 characters.</small>
                   </label>
 
                   {createError && (
-                    <p className="error-message">
-                      {createError}
-                    </p>
+                    <p className="error-message">{createError}</p>
                   )}
 
-                  <button
-                    type="submit"
-                    className="primary-button"
-                  >
+                  <button type="submit" className="primary-button">
                     <Plus size={18} />
                     Create My Agent
                   </button>
-
                 </form>
-
               </div>
-
             </section>
 
             <footer>
-              <p>
-                © 2026 Vertical AI Platform. All rights reserved.
-              </p>
-
-              <p>
-                Built for the future of every industry.
-              </p>
+              <p>© 2026 Vertical AI Platform. All rights reserved.</p>
+              <p>Built for the future of every industry.</p>
             </footer>
-
           </>
         )}
-
       </main>
     </div>
   );
-}
+                   }
