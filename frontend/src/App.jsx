@@ -317,7 +317,7 @@ export default function App() {
   }
 
   // Send a message
-  function sendMessage(e) {
+  async function sendMessage(e) {
     e.preventDefault();
 
     const question = message.trim();
@@ -326,7 +326,7 @@ export default function App() {
       return;
     }
 
-    const reply = getDemoReply(selectedAgent, question);
+    const reply = await getAgentReply(selectedAgent.name, question);
     const now = Date.now();
 
     const userMessage = {
