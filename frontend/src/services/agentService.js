@@ -1,6 +1,7 @@
-
-// Frontend AI Agent Service
-// Demo mode until backend integration.
+// VERTICAL AI PLATFORM
+// AI Agent Service
+// Supports conversation history and custom agent instructions.
+// Demo mode until real AI backend/API is connected.
 
 export async function getAgentReply(
   agentName,
@@ -8,34 +9,55 @@ export async function getAgentReply(
   instructions = "",
   conversationHistory = []
 ) {
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  await new Promise(resolve => setTimeout(resolve, 800));
 
   if (!message || !message.trim()) {
     throw new Error("Please enter a message.");
   }
 
-  const previousMessages = Array.isArray(conversationHistory)
+  // Convert previous messages into API-friendly format.
+  const history = Array.isArray(conversationHistory)
     ? conversationHistory
-        .filter((item) => item && item.content)
-        .map((item) => ({
+        .filter(item =>
+          item &&
+          ["user", "assistant"].includes(item.role) &&
+          typeof item.text === "string"
+        )
+        .map(item => ({
           role: item.role,
-          content: item.content,
+          content: item.text
         }))
     : [];
 
-  const contextText = previousMessages.length
-    ? previousMessages
-        .map((item) => `${item.role}: ${item.content}`)
-        .join("\n")
-    : "No previous conversation.";
+  // Demo response.
+  // Real AI API integration will replace this section.
 
-  return `${agentName} Demo Agent
+  const previousCount = history.length;
 
-${instructions ? `Agent Instructions:\n${instructions}\n\n` : ""}Previous Conversation:
-${contextText}
+  if (instructions && instructions.trim()) {
+    return [
+      `${agentName} received your message.`,
+      "",
+      `Your instructions: ${instructions}`,
+      "",
+      `Previous conversation messages available: ${previousCount}`,
+      "",
+      `Your latest message: ${message}`,
+      "",
+      "This is currently a demo response.",
+      "Your conversation history is being prepared for AI integration.",
+      "Connect a real AI backend/API to receive intelligent contextual responses."
+    ].join("\n");
+  }
 
-New Message:
-${message}
-
-This is a demo response. Real AI responses will be available after backend integration.`;
+  return [
+    `${agentName} received your message.`,
+    "",
+    `Previous conversation messages available: ${previousCount}`,
+    "",
+    `Your latest message: ${message}`,
+    "",
+    "This is currently a demo response.",
+    "Connect a real AI backend/API to receive intelligent contextual responses."
+  ].join("\n");
 }
