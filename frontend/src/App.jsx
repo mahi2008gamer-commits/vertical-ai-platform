@@ -750,9 +750,8 @@ try {
         </header>
 
         {/* AGENT WORKSPACE */}
-        {selectedAgent ? (
-
-          <section className="chat-page">
+        {detailsAgent ? (
+  <section className="agent-details-page">
 
             <div className="workspace-toolbar">
 
