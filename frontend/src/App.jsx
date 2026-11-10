@@ -1,4 +1,4 @@
-7import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAgentReply } from "./services/agentService";
 import {
   Search, LayoutDashboard, Compass, Bot, Plus,
@@ -6,18 +6,16 @@ import {
   HeartPulse, Sprout, Landmark, ShoppingBag,
   Factory, GraduationCap, ArrowLeft, Send, User,
   MessageSquarePlus, History, Trash2, Copy,
-  Check, ChevronDown
+  Check, ChevronDown, Clock, RefreshCw
 } from "lucide-react";
 
 const STORAGE_KEY = "vertical-ai-phase3-chats";
 
 // Generate unique IDs
 function generateId() {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 // AI Agents
@@ -88,36 +86,89 @@ const categories = [
   "Education"
 ];
 
-// Demo response function
-// Your friend can replace this with a backend API later.
-function getDemoReply(agent, question) {
-  const replies = {
-    Healthcare:
-      "I am your Medical Assistant demo. I can explain general health information and medical terms. Please consult a qualified healthcare professional for diagnosis or treatment.",
+// Agent details
+const agentDetails = {
+  medical: {
+    features: [
+      "General health information",
+      "Medical terms explanation",
+      "Patient support guidance",
+      "Appointment preparation"
+    ],
+    uses: [
+      "Understand common health topics",
+      "Learn medical terminology",
+      "Prepare questions for doctors"
+    ]
+  },
+  agriculture: {
+    features: [
+      "Crop planning guidance",
+      "Soil information",
+      "Irrigation suggestions",
+      "Pest awareness"
+    ],
+    uses: [
+      "Plan crop cultivation",
+      "Understand farming methods",
+      "Learn about irrigation"
+    ]
+  },
+  finance: {
+    features: [
+      "Budget planning",
+      "Financial concepts",
+      "Business performance insights",
+      "Expense analysis"
+    ],
+    uses: [
+      "Understand business expenses",
+      "Learn financial concepts",
+      "Organize budgets"
+    ]
+  },
+  retail: {
+    features: [
+      "Product information",
+      "Customer support guidance",
+      "Retail operations",
+      "Customer FAQ assistance"
+    ],
+    uses: [
+      "Prepare customer responses",
+      "Organize product information",
+      "Improve store operations"
+    ]
+  },
+  manufacturing: {
+    features: [
+      "Production planning",
+      "Workflow improvement",
+      "Quality management concepts",
+      "Operational efficiency"
+    ],
+    uses: [
+      "Understand production workflows",
+      "Identify process improvements",
+      "Learn quality management"
+    ]
+  },
+  education: {
+    features: [
+      "Concept explanations",
+      "Personalized study guidance",
+      "Practice questions",
+      "Learning assistance"
+    ],
+    uses: [
+      "Understand difficult topics",
+      "Prepare for examinations",
+      "Practice questions"
+    ]
+  }
+};
 
-    Agriculture:
-      "I am your Agriculture AI demo. I can help with crop planning, soil information, irrigation and farming practices. Tell me your crop, location and farming question.",
-
-    Finance:
-      "I am your Finance Advisor demo. I can help explain budgeting, financial concepts and business performance. Share the details you want to understand.",
-
-    Retail:
-      "I am your Retail Assistant demo. I can help with product information, customer support ideas and retail operations. Tell me what you need.",
-
-    Manufacturing:
-      "I am your Industry Expert demo. I can help explain manufacturing workflows, production planning and operational efficiency. Describe your process.",
-
-    Education:
-      "I am your Education Tutor demo. I can explain subjects, help with study plans and create practice questions. Which topic are you studying?"
-  };
-
-  return (
-    replies[agent.category] ||
-    `I received your question: "${question}". This is a frontend demo response.`
-  );
-}
-
-// Create a new chat
+// Create chat
 function createChat(agent) {
   const now = Date.now();
 
@@ -138,7 +189,7 @@ function createChat(agent) {
   };
 }
 
-// Validate saved chat data
+// Validate chat
 function isValidChat(chat) {
   return (
     chat &&
@@ -146,17 +197,16 @@ function isValidChat(chat) {
     typeof chat.agentId === "string" &&
     typeof chat.title === "string" &&
     Array.isArray(chat.messages) &&
-    chat.messages.every(
-      (item) =>
-        item &&
-        typeof item.id === "string" &&
-        ["user", "assistant"].includes(item.role) &&
-        typeof item.text === "string"
+    chat.messages.every(item =>
+      item &&
+      typeof item.id === "string" &&
+      ["user", "assistant"].includes(item.role) &&
+      typeof item.text === "string"
     )
   );
 }
 
-// Safely read saved chats
+// Read saved chats
 function readSavedChats() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -169,16 +219,16 @@ function readSavedChats() {
 
     return parsed
       .filter(isValidChat)
-      .filter((chat) =>
-        agents.some((agent) => agent.id === chat.agentId)
+      .filter(chat =>
+        agents.some(agent => agent.id === chat.agentId)
       );
   } catch (error) {
-    console.error("Could not read chat history:", error);
+    console.error("Chat loading error:", error);
     return [];
   }
 }
 
-// Copy fallback for browsers without Clipboard API
+// Copy text
 async function copyText(text) {
   try {
     if (navigator.clipboard?.writeText) {
@@ -194,106 +244,26 @@ async function copyText(text) {
     document.body.appendChild(textarea);
     textarea.select();
 
-    const copied = document.execCommand("copy");
-
+    const success = document.execCommand("copy");
     document.body.removeChild(textarea);
 
-    return copied;
+    return success;
   } catch (error) {
-    console.error("Copy failed:", error);
+    console.error("Copy error:", error);
     return false;
   }
 }
-// Agent details information
-function getAgentDetails(agent) {
-  const details = {
-    medical: {
-      features: [
-        "General health information",
-        "Medical terms explanation",
-        "Patient support guidance",
-        "Appointment preparation"
-      ],
-      uses: [
-        "Understand common health topics",
-        "Learn medical terminology",
-        "Prepare questions for doctors"
-      ]
-    },
 
-    agriculture: {
-      features: [
-        "Crop planning guidance",
-        "Soil information",
-        "Irrigation suggestions",
-        "Pest awareness"
-      ],
-      uses: [
-        "Plan crop cultivation",
-        "Understand farming methods",
-        "Learn about irrigation"
-      ]
-    },
+// Format message time
+function formatTime(timestamp) {
+  if (!timestamp) return "";
 
-    finance: {
-      features: [
-        "Budget planning",
-        "Financial concepts",
-        "Business performance insights",
-        "Expense analysis"
-      ],
-      uses: [
-        "Understand business expenses",
-        "Learn financial concepts",
-        "Organize budgets"
-      ]
-    },
-
-    retail: {
-      features: [
-        "Product information",
-        "Customer support guidance",
-        "Retail operations",
-        "Customer FAQ assistance"
-      ],
-      uses: [
-        "Prepare customer responses",
-        "Organize product information",
-        "Improve store operations"
-      ]
-    },
-
-    manufacturing: {
-      features: [
-        "Production planning",
-        "Workflow improvement",
-        "Quality management concepts",
-        "Operational efficiency"
-      ],
-      uses: [
-        "Understand production workflows",
-        "Identify process improvements",
-        "Learn quality management"
-      ]
-    },
-
-    education: {
-      features: [
-        "Concept explanations",
-        "Personalized study guidance",
-        "Practice questions",
-        "Learning assistance"
-      ],
-      uses: [
-        "Understand difficult topics",
-        "Prepare for examinations",
-        "Practice questions"
-      ]
-    }
-  };
-
-  return details[agent.id];
+  return new Date(timestamp).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
+
 export default function App() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
@@ -304,160 +274,149 @@ export default function App() {
   const [activeChatId, setActiveChatId] = useState(null);
 
   const [chats, setChats] = useState(readSavedChats);
+
   const [message, setMessage] = useState("");
   const [copiedId, setCopiedId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-const [chatError, setChatError] = useState("");
-const messagesContainerRef = useRef(null);
-  // Save chats whenever they change
+  const [chatError, setChatError] = useState("");
+
+  const messagesContainerRef = useRef(null);
+
+  // Save chats automatically
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(chats)
+      );
     } catch (error) {
-      console.error("Could not save chat history:", error);
+      console.error("Could not save chats:", error);
     }
   }, [chats]);
 
-  // Active conversation
+  // Active chat
   const activeChat = chats.find(
-    (chat) => chat.id === activeChatId
+    chat => chat.id === activeChatId
   );
 
   const messages = activeChat?.messages || [];
-useEffect(() => {
-  const container = messagesContainerRef.current;
 
-  if (container) {
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: "smooth"
-    });
-  }
-}, [messages, isLoading]);
-  // Chats belonging to selected agent
+  // Automatic scroll
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+  }, [messages, isLoading]);
+
+  // Agent chat history
   const agentChats = chats
-    .filter((chat) => chat.agentId === selectedAgent?.id)
+    .filter(chat => chat.agentId === selectedAgent?.id)
     .sort((a, b) => b.updatedAt - a.updatedAt);
 
-  // Search and category filtering
-  const filteredAgents = agents.filter((agent) => {
+  // Agent search
+  const filteredAgents = agents.filter(agent => {
+    const term = search.toLowerCase().trim();
+
     const matchesCategory =
       activeCategory === "All" ||
       agent.category === activeCategory;
 
-    const searchTerm = search.toLowerCase().trim();
-
     const matchesSearch =
-      agent.name.toLowerCase().includes(searchTerm) ||
-      agent.category.toLowerCase().includes(searchTerm) ||
-      agent.description.toLowerCase().includes(searchTerm);
+      agent.name.toLowerCase().includes(term) ||
+      agent.category.toLowerCase().includes(term) ||
+      agent.description.toLowerCase().includes(term);
 
     return matchesCategory && matchesSearch;
   });
 
-  // Create new conversation
+  // Create new chat
   function createNewChat(agent) {
     if (!agent) return;
 
     const newChat = createChat(agent);
 
-    setChats((previous) => [
+    setChats(previous => [
       newChat,
       ...previous
     ]);
 
     setSelectedAgent(agent);
+    setDetailsAgent(null);
     setActiveChatId(newChat.id);
+
     setMessage("");
+    setChatError("");
     setCopiedId(null);
     setMobileMenu(false);
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Open agent details page
-function openAgent(agent) {
-  setDetailsAgent(agent);
-  setSelectedAgent(null);
-  setActiveChatId(null);
-  setMessage("");
-  setChatError("");
-  setCopiedId(null);
-  setMobileMenu(false);
+  // Open agent details
+  function openAgent(agent) {
+    setDetailsAgent(agent);
+    setSelectedAgent(null);
+    setActiveChatId(null);
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
+    setMessage("");
+    setChatError("");
+    setCopiedId(null);
+    setMobileMenu(false);
 
-  // Open previous conversation
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Open existing chat
   function openExistingChat(chat) {
     const agent = agents.find(
-      (item) => item.id === chat.agentId
+      item => item.id === chat.agentId
     );
 
     if (!agent) return;
 
     setSelectedAgent(agent);
+    setDetailsAgent(null);
     setActiveChatId(chat.id);
+
     setMessage("");
+    setChatError("");
     setCopiedId(null);
     setMobileMenu(false);
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // Return to dashboard
   function closeAgent() {
     setSelectedAgent(null);
+    setDetailsAgent(null);
     setActiveChatId(null);
+
     setMessage("");
+    setChatError("");
     setCopiedId(null);
     setMobileMenu(false);
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // Send a message
+  // Send message
   async function sendMessage(e) {
     e.preventDefault();
 
     const question = message.trim();
+    const agent = selectedAgent;
+    const chatId = activeChatId;
 
-    if (!question || !selectedAgent || !activeChatId) {
+    if (!question || !agent || !chatId || isLoading) {
       return;
     }
 
-    let reply;
-
-try {
-  setIsLoading(true);
-  setChatError("");
-
-  reply = await getAgentReply(
-    selectedAgent.name,
-    question
-  );
-
-} catch (error) {
-  setChatError(
-    error.message || "Something went wrong. Please try again."
-  );
-  return;
-
-} finally {
-  setIsLoading(false);
-}
     const now = Date.now();
 
     const userMessage = {
@@ -467,93 +426,143 @@ try {
       createdAt: now
     };
 
-    const assistantMessage = {
-      id: generateId(),
-      role: "assistant",
-      text: reply,
-      createdAt: now
-    };
-
-    setChats((previous) =>
-      previous.map((chat) => {
-        if (chat.id !== activeChatId) return chat;
+    // Save user message immediately
+    setChats(previous =>
+      previous.map(chat => {
+        if (chat.id !== chatId) return chat;
 
         const firstUserMessage = !chat.messages.some(
-          (item) => item.role === "user"
+          item => item.role === "user"
         );
 
         return {
           ...chat,
-
           title: firstUserMessage
             ? question.slice(0, 35) +
               (question.length > 35 ? "..." : "")
             : chat.title,
-
           updatedAt: now,
-
           messages: [
             ...chat.messages,
-            userMessage,
-            assistantMessage
+            userMessage
           ]
         };
       })
     );
 
     setMessage("");
+    setChatError("");
+    setIsLoading(true);
+
+    try {
+      const result = await getAgentReply(
+        agent.name,
+        question
+      );
+
+      const reply =
+        typeof result === "string"
+          ? result
+          : String(result?.reply || result?.message || "No response received.");
+
+      const assistantMessage = {
+        id: generateId(),
+        role: "assistant",
+        text: reply,
+        createdAt: Date.now()
+      };
+
+      setChats(previous =>
+        previous.map(chat =>
+          chat.id === chatId
+            ? {
+                ...chat,
+                updatedAt: Date.now(),
+                messages: [
+                  ...chat.messages,
+                  assistantMessage
+                ]
+              }
+            : chat
+        )
+      );
+
+    } catch (error) {
+      console.error("AI response error:", error);
+
+      setChatError(
+        error.message ||
+        "Unable to connect to AI. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  // Delete an individual message
+  // Delete individual message
   function deleteMessage(messageId) {
-    setChats((previous) =>
-      previous.map((chat) => {
-        if (chat.id !== activeChatId) return chat;
+    if (!activeChatId) return;
 
-        return {
-          ...chat,
-          messages: chat.messages.filter(
-            (item) => item.id !== messageId
-          ),
-          updatedAt: Date.now()
-        };
-      })
+    setChats(previous =>
+      previous.map(chat =>
+        chat.id === activeChatId
+          ? {
+              ...chat,
+              messages: chat.messages.filter(
+                item => item.id !== messageId
+              ),
+              updatedAt: Date.now()
+            }
+          : chat
+      )
     );
   }
 
-  // Clear current conversation
+  // Clear current chat
   function clearCurrentChat() {
-    if (!activeChatId || !selectedAgent) return;
+    if (!activeChatId || !selectedAgent || isLoading) return;
+
+    if (!window.confirm("Clear all messages in this conversation?")) {
+      return;
+    }
 
     const freshChat = createChat(selectedAgent);
 
-    setChats((previous) =>
-      previous.map((chat) =>
+    setChats(previous =>
+      previous.map(chat =>
         chat.id === activeChatId
           ? {
               ...freshChat,
               id: chat.id,
-              createdAt: chat.createdAt || Date.now()
+              createdAt: chat.createdAt
             }
           : chat
       )
     );
 
     setMessage("");
+    setChatError("");
     setCopiedId(null);
   }
 
-  // Delete conversation safely
+  // Delete chat
   function deleteChat(chatId) {
+    if (isLoading && chatId === activeChatId) {
+      alert("Please wait until the AI response finishes.");
+      return;
+    }
+
+    if (!window.confirm("Delete this conversation permanently?")) {
+      return;
+    }
+
     const remainingChats = chats
-      .filter((chat) => chat.id !== chatId)
-      .filter(
-        (chat) => chat.agentId === selectedAgent?.id
-      )
+      .filter(chat => chat.id !== chatId)
+      .filter(chat => chat.agentId === selectedAgent?.id)
       .sort((a, b) => b.updatedAt - a.updatedAt);
 
-    setChats((previous) =>
-      previous.filter((chat) => chat.id !== chatId)
+    setChats(previous =>
+      previous.filter(chat => chat.id !== chatId)
     );
 
     if (chatId === activeChatId) {
@@ -575,16 +584,16 @@ try {
       setCopiedId(item.id);
 
       setTimeout(() => {
-        setCopiedId((current) =>
+        setCopiedId(current =>
           current === item.id ? null : current
         );
       }, 1800);
     } else {
-      alert("Could not copy this message. Please try again.");
+      alert("Could not copy this message.");
     }
   }
 
-  // Dashboard navigation
+  // Navigation
   function navigateTo(section) {
     closeAgent();
 
@@ -624,8 +633,8 @@ try {
         <nav>
           <button
             className={`nav-item ${
-  !selectedAgent && !detailsAgent ? "active" : ""
-}`}
+              !selectedAgent && !detailsAgent ? "active" : ""
+            }`}
             onClick={closeAgent}
           >
             <LayoutDashboard size={19} />
@@ -661,7 +670,7 @@ try {
 
               <button
                 title="New Chat"
-                aria-label="Create new chat"
+                aria-label="New Chat"
                 onClick={() => createNewChat(selectedAgent)}
               >
                 <Plus size={18} />
@@ -675,7 +684,7 @@ try {
                   No conversations yet.
                 </p>
               ) : (
-                agentChats.map((chat) => (
+                agentChats.map(chat => (
                   <div
                     key={chat.id}
                     className={`history-item ${
@@ -694,7 +703,6 @@ try {
                     <button
                       className="history-delete"
                       title="Delete conversation"
-                      aria-label={`Delete ${chat.title}`}
                       onClick={() => deleteChat(chat.id)}
                     >
                       <Trash2 size={14} />
@@ -748,10 +756,10 @@ try {
           <div className="breadcrumb">
             Platform <span>/</span>
             {detailsAgent
-  ? detailsAgent.name
-  : selectedAgent
-  ? selectedAgent.name
-  : "Dashboard"}
+              ? detailsAgent.name
+              : selectedAgent
+                ? selectedAgent.name
+                : "Dashboard"}
           </div>
 
           <div className="top-actions">
@@ -762,18 +770,20 @@ try {
 
         </header>
 
-        {/* AGENT WORKSPACE */}
+        {/* AGENT DETAILS */}
         {detailsAgent ? (
-  <section className="agent-details-page">
-                <button
+          <section className="agent-details-page">
+
+            <button
               className="details-back-button"
-              onClick={() => setDetailsAgent(null)}
+              onClick={closeAgent}
             >
               <ArrowLeft size={18} />
               Back to Marketplace
             </button>
 
             <div className="details-hero">
+
               <div
                 className="details-agent-icon"
                 style={{ color: detailsAgent.color }}
@@ -796,53 +806,58 @@ try {
 
               <button
                 className="details-use-button"
-                onClick={() => {
-                  const agent = detailsAgent;
-                  setDetailsAgent(null);
-                  createNewChat(agent);
-                }}
+                onClick={() => createNewChat(detailsAgent)}
               >
                 <Sparkles size={18} />
                 Use This Agent
                 <ArrowUpRight size={18} />
               </button>
+
             </div>
 
             <div className="details-section">
               <h2>Key Features</h2>
+
               <div className="details-feature-grid">
-                {getAgentDetails(detailsAgent).features.map((feature, index) => (
-                  <div className="details-feature-card" key={index}>
-                    <Check size={19} />
-                    <p>{feature}</p>
-                  </div>
-                ))}
+                {agentDetails[detailsAgent.id].features.map(
+                  (feature, index) => (
+                    <div className="details-feature-card" key={index}>
+                      <Check size={19} />
+                      <p>{feature}</p>
+                    </div>
+                  )
+                )}
               </div>
             </div>
 
             <div className="details-section">
               <h2>What Can You Do With This Agent?</h2>
+
               <div className="details-feature-grid">
-                {getAgentDetails(detailsAgent).uses.map((use, index) => (
-                  <div className="details-feature-card" key={index}>
-                    <Sparkles size={19} />
-                    <p>{use}</p>
-                  </div>
-                ))}
+                {agentDetails[detailsAgent.id].uses.map(
+                  (use, index) => (
+                    <div className="details-feature-card" key={index}>
+                      <Sparkles size={19} />
+                      <p>{use}</p>
+                    </div>
+                  )
+                )}
               </div>
             </div>
 
             <div className="chat-notice">
-              Demo version: Live AI responses and backend integration
-              will be added later.
+              Live AI responses and backend integration can be connected
+              through the agent service.
             </div>
+
           </section>
 
         ) : selectedAgent ? (
 
-    <section className="chat-page">
+          /* CHAT WORKSPACE */
+          <section className="chat-page">
 
-    <div className="workspace-toolbar">
+            <div className="workspace-toolbar">
 
               <button
                 className="back-button"
@@ -862,13 +877,17 @@ try {
 
             </div>
 
+            {/* CHAT HEADING */}
             <div className="chat-heading">
 
               <div
                 className="chat-agent-icon"
                 style={{ color: selectedAgent.color }}
               >
-                <selectedAgent.icon size={30} />
+                {(() => {
+                  const Icon = selectedAgent.icon;
+                  return <Icon size={30} />;
+                })()}
               </div>
 
               <div className="agent-heading-info">
@@ -893,21 +912,16 @@ try {
                 <select
                   id="agent-switch"
                   value={selectedAgent.id}
-                  onChange={(e) => {
+                  onChange={e => {
                     const nextAgent = agents.find(
-                      (item) => item.id === e.target.value
+                      item => item.id === e.target.value
                     );
 
-                    if (nextAgent) {
-                      openAgent(nextAgent);
-                    }
+                    if (nextAgent) openAgent(nextAgent);
                   }}
                 >
-                  {agents.map((agent) => (
-                    <option
-                      key={agent.id}
-                      value={agent.id}
-                    >
+                  {agents.map(agent => (
+                    <option key={agent.id} value={agent.id}>
                       {agent.name}
                     </option>
                   ))}
@@ -919,19 +933,23 @@ try {
             </div>
 
             <div className="chat-notice">
-              This is a frontend demo. Replies are sample responses,
-              not generated by a live AI model.
+              Your conversations are saved in this browser.
+              Backend database integration can be added later.
             </div>
 
             {/* MESSAGES */}
-            <div className="chat-messages" ref={messagesContainerRef}>
+            <div
+              className="chat-messages"
+              ref={messagesContainerRef}
+              aria-live="polite"
+            >
 
               {messages.length === 0 ? (
                 <p className="history-empty">
                   No messages in this conversation. Send a message to start.
                 </p>
               ) : (
-                messages.map((item) => (
+                messages.map(item => (
 
                   <div
                     className={`message-row ${item.role}`}
@@ -951,6 +969,13 @@ try {
                       </div>
 
                       <div className="message-actions">
+
+                        {item.createdAt && (
+                          <span className="message-time">
+                            <Clock size={12} />
+                            {formatTime(item.createdAt)}
+                          </span>
+                        )}
 
                         <button
                           onClick={() => copyMessage(item)}
@@ -974,27 +999,26 @@ try {
                         </button>
 
                       </div>
+
                     </div>
 
                   </div>
 
                 ))
               )}
-                            {isLoading && (
+
+              {isLoading && (
                 <div className="loading-message">
-                  🤖 AI Agent is thinking...
+                  <RefreshCw size={16} />
+                  AI Agent is thinking...
                 </div>
               )}
 
               {chatError && (
-                <div className="error-message">
+                <div className="error-message" role="alert">
                   {chatError}
                 </div>
               )}
-
-            </div>
-
-                        
 
             </div>
 
@@ -1006,14 +1030,19 @@ try {
 
               <input
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={e => setMessage(e.target.value)}
                 placeholder={`Ask ${selectedAgent.name}...`}
                 aria-label="Type your message"
+                disabled={isLoading}
               />
 
               <button
                 type="submit"
-                disabled={!message.trim() || !activeChat || isLoading}
+                disabled={
+                  !message.trim() ||
+                  !activeChat ||
+                  isLoading
+                }
                 aria-label="Send message"
               >
                 <Send size={19} />
@@ -1023,17 +1052,19 @@ try {
 
             {/* CLEAR CHAT */}
             <div className="workspace-bottom-actions">
+
               <button
                 onClick={clearCurrentChat}
-                disabled={!activeChat}
+                disabled={!activeChat || isLoading}
               >
                 <Trash2 size={15} />
                 Clear Current Chat
               </button>
+
             </div>
 
             <p className="chat-footer">
-              Vertical AI Platform · Agent Workspace V3.0
+              Vertical AI Platform · Agent Workspace V3.1
             </p>
 
           </section>
@@ -1066,22 +1097,17 @@ try {
 
                 <div className="hero-actions">
 
-                  <a
-                    href="#agents"
-                    className="primary-button"
-                  >
+                  <a href="#agents" className="primary-button">
                     Explore AI Agents
                     <ArrowUpRight size={17} />
                   </a>
 
-                  <a
-                    href="#create"
-                    className="secondary-button"
-                  >
+                  <a href="#create" className="secondary-button">
                     Create Your Agent
                   </a>
 
                 </div>
+
               </div>
 
               <div className="hero-visual">
@@ -1162,22 +1188,20 @@ try {
 
               {/* SEARCH */}
               <div className="search-box">
-
                 <Search size={20} />
 
                 <input
                   placeholder="Search AI agents or industries..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={e => setSearch(e.target.value)}
+                  aria-label="Search AI agents"
                 />
-
               </div>
 
               {/* CATEGORIES */}
               <div className="category-list">
 
-                {categories.map((category) => (
-
+                {categories.map(category => (
                   <button
                     key={category}
                     className={
@@ -1189,7 +1213,6 @@ try {
                   >
                     {category}
                   </button>
-
                 ))}
 
               </div>
@@ -1197,16 +1220,11 @@ try {
               {/* AGENT CARDS */}
               <div className="agents-grid">
 
-                {filteredAgents.map((agent) => {
-
+                {filteredAgents.map(agent => {
                   const Icon = agent.icon;
 
                   return (
-
-                    <article
-                      className="agent-card"
-                      key={agent.id}
-                    >
+                    <article className="agent-card" key={agent.id}>
 
                       <div className="agent-top">
 
@@ -1242,7 +1260,6 @@ try {
                       </button>
 
                     </article>
-
                   );
                 })}
 
