@@ -1,22 +1,41 @@
+
 // Frontend AI Agent Service
 // Demo mode until backend integration.
 
-export async function getAgentReply(agentName, message, instructions = "") {
+export async function getAgentReply(
+  agentName,
+  message,
+  instructions = "",
+  conversationHistory = []
+) {
   await new Promise((resolve) => setTimeout(resolve, 800));
 
   if (!message || !message.trim()) {
     throw new Error("Please enter a message.");
   }
 
-  if (instructions && instructions.trim()) {
-    return `${agentName} is configured with your custom instructions:
+  const previousMessages = Array.isArray(conversationHistory)
+    ? conversationHistory
+        .filter((item) => item && item.content)
+        .map((item) => ({
+          role: item.role,
+          content: item.content,
+        }))
+    : [];
 
-"${instructions}"
+  const contextText = previousMessages.length
+    ? previousMessages
+        .map((item) => `${item.role}: ${item.content}`)
+        .join("\n")
+    : "No previous conversation.";
 
-Your message: "${message}"
+  return `${agentName} Demo Agent
 
-This is a demo response. Real AI responses using these instructions will be available after backend integration.`;
-  }
+${instructions ? `Agent Instructions:\n${instructions}\n\n` : ""}Previous Conversation:
+${contextText}
 
-  return `${agentName} received your message: "${message}". This is a demo response. Real AI responses will be available after backend integration.`;
+New Message:
+${message}
+
+This is a demo response. Real AI responses will be available after backend integration.`;
 }
