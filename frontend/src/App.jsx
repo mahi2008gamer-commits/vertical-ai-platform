@@ -7,7 +7,9 @@ import {
   HeartPulse, Sprout, Landmark, ShoppingBag,
   Factory, GraduationCap, ArrowLeft, Send, User,
   MessageSquarePlus, History, Trash2, Copy,
-  Check, ChevronDown, Clock, RefreshCw
+  Check, ChevronDown, Clock, RefreshCw,
+  Pencil, Download, MoreVertical, MessageSquare,
+  Settings, ShieldCheck, RotateCcw, FileText
 } from "lucide-react";
 
 const STORAGE_KEY = "vertical-ai-phase3-chats";
@@ -95,28 +97,82 @@ const agents = [
 
 const agentDetails = {
   medical: {
-    features: ["General health information", "Medical terms explanation", "Patient support guidance", "Appointment preparation"],
-    uses: ["Understand common health topics", "Learn medical terminology", "Prepare questions for doctors"]
+    features: [
+      "General health information",
+      "Medical terms explanation",
+      "Patient support guidance",
+      "Appointment preparation"
+    ],
+    uses: [
+      "Understand common health topics",
+      "Learn medical terminology",
+      "Prepare questions for doctors"
+    ]
   },
   agriculture: {
-    features: ["Crop planning guidance", "Soil information", "Irrigation suggestions", "Pest awareness"],
-    uses: ["Plan crop cultivation", "Understand farming methods", "Learn about irrigation"]
+    features: [
+      "Crop planning guidance",
+      "Soil information",
+      "Irrigation suggestions",
+      "Pest awareness"
+    ],
+    uses: [
+      "Plan crop cultivation",
+      "Understand farming methods",
+      "Learn about irrigation"
+    ]
   },
   finance: {
-    features: ["Budget planning", "Financial concepts", "Business performance insights", "Expense analysis"],
-    uses: ["Understand business expenses", "Learn financial concepts", "Organize budgets"]
+    features: [
+      "Budget planning",
+      "Financial concepts",
+      "Business performance insights",
+      "Expense analysis"
+    ],
+    uses: [
+      "Understand business expenses",
+      "Learn financial concepts",
+      "Organize budgets"
+    ]
   },
   retail: {
-    features: ["Product information", "Customer support guidance", "Retail operations", "Customer FAQ assistance"],
-    uses: ["Prepare customer responses", "Organize product information", "Improve store operations"]
+    features: [
+      "Product information",
+      "Customer support guidance",
+      "Retail operations",
+      "Customer FAQ assistance"
+    ],
+    uses: [
+      "Prepare customer responses",
+      "Organize product information",
+      "Improve store operations"
+    ]
   },
   manufacturing: {
-    features: ["Production planning", "Workflow improvement", "Quality management concepts", "Operational efficiency"],
-    uses: ["Understand production workflows", "Identify process improvements", "Learn quality management"]
+    features: [
+      "Production planning",
+      "Workflow improvement",
+      "Quality management concepts",
+      "Operational efficiency"
+    ],
+    uses: [
+      "Understand production workflows",
+      "Identify process improvements",
+      "Learn quality management"
+    ]
   },
   education: {
-    features: ["Concept explanations", "Personalized study guidance", "Practice questions", "Learning assistance"],
-    uses: ["Understand difficult topics", "Prepare for examinations", "Practice questions"]
+    features: [
+      "Concept explanations",
+      "Personalized study guidance",
+      "Practice questions",
+      "Learning assistance"
+    ],
+    uses: [
+      "Understand difficult topics",
+      "Prepare for examinations",
+      "Practice questions"
+    ]
   }
 };
 
@@ -126,34 +182,38 @@ function generateId() {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function readSavedAgents() {
+function readStorage(key, fallback = []) {
   try {
-    const saved = JSON.parse(localStorage.getItem(CUSTOM_AGENTS_KEY) || "[]");
-    if (!Array.isArray(saved)) return [];
-
-    return saved
-      .filter(agent =>
-        agent &&
-        typeof agent.id === "string" &&
-        typeof agent.name === "string" &&
-        typeof agent.category === "string" &&
-        typeof agent.description === "string" &&
-        categories.includes(agent.category) &&
-        agent.category !== "All"
-      )
-      .map(agent => ({
-        ...agent,
-        instructions: typeof agent.instructions === "string"
-          ? agent.instructions
-          : "",
-        icon: categoryIcons[agent.category],
-        color: categoryColors[agent.category],
-        status: "Custom",
-        isCustom: true
-      }));
+    const value = JSON.parse(localStorage.getItem(key) || "null");
+    return value ?? fallback;
   } catch {
-    return [];
+    return fallback;
   }
+}
+
+function readSavedAgents() {
+  const saved = readStorage(CUSTOM_AGENTS_KEY);
+
+  if (!Array.isArray(saved)) return [];
+
+  return saved
+    .filter(agent =>
+      agent &&
+      typeof agent.id === "string" &&
+      typeof agent.name === "string" &&
+      typeof agent.description === "string" &&
+      typeof agent.category === "string" &&
+      categories.includes(agent.category) &&
+      agent.category !== "All"
+    )
+    .map(agent => ({
+      ...agent,
+      instructions: agent.instructions || "",
+      icon: categoryIcons[agent.category],
+      color: categoryColors[agent.category],
+      status: "Custom",
+      isCustom: true
+    }));
 }
 
 function createChat(agent) {
@@ -165,12 +225,14 @@ function createChat(agent) {
     title: "New conversation",
     createdAt: now,
     updatedAt: now,
-    messages: [{
-      id: generateId(),
-      role: "assistant",
-      text: `Hello! I am ${agent.name}. Welcome! How can I help you today?`,
-      createdAt: now
-    }]
+    messages: [
+      {
+        id: generateId(),
+        role: "assistant",
+        text: `Hello! I am ${agent.name}. Welcome! How can I help you today?`,
+        createdAt: now
+      }
+    ]
   };
 }
 
@@ -191,21 +253,17 @@ function isValidChat(chat) {
 }
 
 function readSavedChats() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    if (!Array.isArray(saved)) return [];
+  const saved = readStorage(STORAGE_KEY);
+  if (!Array.isArray(saved)) return [];
 
-    const knownIds = [
-      ...agents.map(agent => agent.id),
-      ...readSavedAgents().map(agent => agent.id)
-    ];
+  const knownIds = [
+    ...agents.map(agent => agent.id),
+    ...readSavedAgents().map(agent => agent.id)
+  ];
 
-    return saved.filter(chat =>
-      isValidChat(chat) && knownIds.includes(chat.agentId)
-    );
-  } catch {
-    return [];
-  }
+  return saved.filter(chat =>
+    isValidChat(chat) && knownIds.includes(chat.agentId)
+  );
 }
 
 async function copyText(text) {
@@ -224,6 +282,7 @@ async function copyText(text) {
 
     const success = document.execCommand("copy");
     document.body.removeChild(textarea);
+
     return success;
   } catch {
     return false;
@@ -263,8 +322,11 @@ export default function App() {
   const [agentInstructions, setAgentInstructions] = useState("");
   const [createError, setCreateError] = useState("");
 
+  const [showCustomOnly, setShowCustomOnly] = useState(false);
+
   const messagesContainerRef = useRef(null);
 
+  // PERSIST DATA
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
@@ -277,18 +339,24 @@ export default function App() {
     try {
       localStorage.setItem(
         CUSTOM_AGENTS_KEY,
-        JSON.stringify(customAgents.map(({ icon, ...agent }) => agent))
+        JSON.stringify(
+          customAgents.map(({ icon, ...agent }) => agent)
+        )
       );
     } catch (error) {
       console.error("Agent saving error:", error);
     }
   }, [customAgents]);
 
-  const activeChat = chats.find(chat => chat.id === activeChatId);
+  const activeChat = chats.find(
+    chat => chat.id === activeChatId
+  );
+
   const messages = activeChat?.messages || [];
 
   useEffect(() => {
     const container = messagesContainerRef.current;
+
     if (container) {
       container.scrollTo({
         top: container.scrollHeight,
@@ -305,22 +373,27 @@ export default function App() {
     const term = search.toLowerCase().trim();
 
     const matchesCategory =
-      activeCategory === "All" || agent.category === activeCategory;
+      activeCategory === "All" ||
+      agent.category === activeCategory;
 
     const matchesSearch =
       agent.name.toLowerCase().includes(term) ||
       agent.category.toLowerCase().includes(term) ||
       agent.description.toLowerCase().includes(term);
 
-    return matchesCategory && matchesSearch;
+    const matchesType =
+      !showCustomOnly || agent.isCustom;
+
+    return matchesCategory && matchesSearch && matchesType;
   });
 
+  // NAVIGATION
   function createNewChat(agent) {
     if (!agent) return;
 
     const newChat = createChat(agent);
-    setChats(previous => [newChat, ...previous]);
 
+    setChats(previous => [newChat, ...previous]);
     setSelectedAgent(agent);
     setDetailsAgent(null);
     setActiveChatId(newChat.id);
@@ -328,6 +401,7 @@ export default function App() {
     setChatError("");
     setCopiedId(null);
     setMobileMenu(false);
+    setIsLoading(false);
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -345,7 +419,10 @@ export default function App() {
   }
 
   function openExistingChat(chat) {
-    const agent = allAgents.find(item => item.id === chat.agentId);
+    const agent = allAgents.find(
+      item => item.id === chat.agentId
+    );
+
     if (!agent) return;
 
     setSelectedAgent(agent);
@@ -355,6 +432,7 @@ export default function App() {
     setChatError("");
     setCopiedId(null);
     setMobileMenu(false);
+    setIsLoading(false);
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -367,23 +445,44 @@ export default function App() {
     setChatError("");
     setCopiedId(null);
     setMobileMenu(false);
+    setIsLoading(false);
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  function navigateTo(section) {
+    closeAgent();
+
+    setTimeout(() => {
+      document.getElementById(section)?.scrollIntoView({
+        behavior: "smooth"
+      });
+    }, 100);
+  }
+
+  // CUSTOM AGENT MANAGEMENT
   function handleEditCustomAgent(agent) {
-    const name = window.prompt("Enter new agent name:", agent.name);
+    if (!agent.isCustom) return;
+
+    const name = window.prompt(
+      "Enter new agent name:",
+      agent.name
+    );
+
     if (name === null) return;
 
     const description = window.prompt(
       "Enter new description:",
       agent.description
     );
+
     if (description === null) return;
 
     const instructions = window.prompt(
       "Enter new agent instructions:",
       agent.instructions || ""
     );
+
     if (instructions === null) return;
 
     const cleanName = name.trim();
@@ -395,8 +494,12 @@ export default function App() {
       return;
     }
 
-    if (cleanName.length > 40 || cleanInstructions.length > 1000) {
-      alert("Name limit: 40 characters. Instructions limit: 1000 characters.");
+    if (
+      cleanName.length > 40 ||
+      cleanDescription.length > 300 ||
+      cleanInstructions.length > 1000
+    ) {
+      alert("Please check the field character limits.");
       return;
     }
 
@@ -424,7 +527,17 @@ export default function App() {
       )
     );
 
-    setDetailsAgent(updatedAgent);
+    setChats(previous =>
+      previous.map(chat =>
+        chat.agentId === agent.id
+          ? { ...chat, agentName: cleanName }
+          : chat
+      )
+    );
+
+    if (detailsAgent?.id === agent.id) {
+      setDetailsAgent(updatedAgent);
+    }
 
     if (selectedAgent?.id === agent.id) {
       setSelectedAgent(updatedAgent);
@@ -434,8 +547,10 @@ export default function App() {
   }
 
   function handleDeleteCustomAgent(agent) {
+    if (!agent.isCustom) return;
+
     const confirmed = window.confirm(
-      `Delete "${agent.name}" and its chat history permanently?`
+      `Delete "${agent.name}" and all its chat history permanently?`
     );
 
     if (!confirmed) return;
@@ -448,13 +563,16 @@ export default function App() {
       previous.filter(chat => chat.agentId !== agent.id)
     );
 
-    setDetailsAgent(null);
-    setSelectedAgent(null);
-    setActiveChatId(null);
+    if (selectedAgent?.id === agent.id) {
+      closeAgent();
+    } else if (detailsAgent?.id === agent.id) {
+      closeAgent();
+    }
 
     alert("Custom agent deleted successfully!");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  // CUSTOM AGENT BUILDER
   function handleCreateAgent(e) {
     e.preventDefault();
 
@@ -463,17 +581,18 @@ export default function App() {
     const instructions = agentInstructions.trim();
 
     if (!name || !description || !instructions) {
-      setCreateError("Please enter agent name, description and instructions.");
+      setCreateError(
+        "Please enter agent name, description and instructions."
+      );
       return;
     }
 
-    if (name.length > 40) {
-      setCreateError("Agent name must be 40 characters or less.");
-      return;
-    }
-
-    if (instructions.length > 1000) {
-      setCreateError("Instructions must be 1000 characters or less.");
+    if (
+      name.length > 40 ||
+      description.length > 300 ||
+      instructions.length > 1000
+    ) {
+      setCreateError("Please check the field character limits.");
       return;
     }
 
@@ -507,10 +626,12 @@ export default function App() {
     setCreateError("");
     setActiveCategory("All");
     setSearch("");
+    setShowCustomOnly(true);
 
     openAgent(newAgent);
   }
 
+  // CHAT OPERATIONS
   async function sendMessage(e) {
     e.preventDefault();
 
@@ -540,7 +661,8 @@ export default function App() {
         return {
           ...chat,
           title: firstUserMessage
-            ? question.slice(0, 35) + (question.length > 35 ? "..." : "")
+            ? question.slice(0, 35) +
+              (question.length > 35 ? "..." : "")
             : chat.title,
           updatedAt: now,
           messages: [...chat.messages, userMessage]
@@ -559,9 +681,14 @@ export default function App() {
         agent.instructions || ""
       );
 
-      const reply = typeof result === "string"
-        ? result
-        : String(result?.reply || result?.message || "No response received.");
+      const reply =
+        typeof result === "string"
+          ? result
+          : String(
+              result?.reply ||
+              result?.message ||
+              "No response received."
+            );
 
       const assistantMessage = {
         id: generateId(),
@@ -583,21 +710,27 @@ export default function App() {
       );
     } catch (error) {
       console.error("AI response error:", error);
-      setChatError(error.message || "Unable to connect to AI. Please try again.");
+
+      setChatError(
+        error?.message ||
+        "Unable to connect to AI. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
   }
 
   function deleteMessage(messageId) {
-    if (!activeChatId) return;
+    if (!activeChatId || isLoading) return;
 
     setChats(previous =>
       previous.map(chat =>
         chat.id === activeChatId
           ? {
               ...chat,
-              messages: chat.messages.filter(item => item.id !== messageId),
+              messages: chat.messages.filter(
+                item => item.id !== messageId
+              ),
               updatedAt: Date.now()
             }
           : chat
@@ -608,14 +741,20 @@ export default function App() {
   function clearCurrentChat() {
     if (!activeChatId || !selectedAgent || isLoading) return;
 
-    if (!window.confirm("Clear all messages in this conversation?")) return;
+    if (!window.confirm("Clear all messages in this conversation?")) {
+      return;
+    }
 
     const freshChat = createChat(selectedAgent);
 
     setChats(previous =>
       previous.map(chat =>
         chat.id === activeChatId
-          ? { ...freshChat, id: chat.id, createdAt: chat.createdAt }
+          ? {
+              ...freshChat,
+              id: chat.id,
+              createdAt: chat.createdAt
+            }
           : chat
       )
     );
@@ -631,24 +770,81 @@ export default function App() {
       return;
     }
 
-    if (!window.confirm("Delete this conversation permanently?")) return;
+    if (!window.confirm("Delete this conversation permanently?")) {
+      return;
+    }
 
     const remainingChats = chats
       .filter(chat => chat.id !== chatId)
       .filter(chat => chat.agentId === selectedAgent?.id)
       .sort((a, b) => b.updatedAt - a.updatedAt);
 
-    setChats(previous => previous.filter(chat => chat.id !== chatId));
+    setChats(previous =>
+      previous.filter(chat => chat.id !== chatId)
+    );
 
     if (chatId === activeChatId) {
       if (remainingChats.length > 0) {
         openExistingChat(remainingChats[0]);
-      } else if (selectedAgent) {
-        createNewChat(selectedAgent);
       } else {
         setActiveChatId(null);
+        setSelectedAgent(null);
+        setDetailsAgent(null);
       }
     }
+  }
+
+  function renameChat(chat) {
+    const title = window.prompt(
+      "Enter conversation name:",
+      chat.title
+    );
+
+    if (title === null) return;
+
+    const cleanTitle = title.trim();
+
+    if (!cleanTitle) {
+      alert("Conversation name cannot be empty.");
+      return;
+    }
+
+    if (cleanTitle.length > 60) {
+      alert("Maximum 60 characters allowed.");
+      return;
+    }
+
+    setChats(previous =>
+      previous.map(item =>
+        item.id === chat.id
+          ? {
+              ...item,
+              title: cleanTitle,
+              updatedAt: Date.now()
+            }
+          : item
+      )
+    );
+  }
+
+  function clearAllChats() {
+    if (isLoading) {
+      alert("Wait until the current AI response finishes.");
+      return;
+    }
+
+    if (!chats.length) return;
+
+    if (!window.confirm("Delete ALL conversation history permanently?")) {
+      return;
+    }
+
+    setChats([]);
+    setActiveChatId(null);
+    setSelectedAgent(null);
+    setDetailsAgent(null);
+    setMessage("");
+    setChatError("");
   }
 
   async function copyMessage(item) {
@@ -656,21 +852,161 @@ export default function App() {
 
     if (success) {
       setCopiedId(item.id);
+
       setTimeout(() => {
-        setCopiedId(current => current === item.id ? null : current);
+        setCopiedId(current =>
+          current === item.id ? null : current
+        );
       }, 1800);
     } else {
       alert("Could not copy this message.");
     }
   }
 
-  function navigateTo(section) {
-    closeAgent();
-    setTimeout(() => {
-      document.getElementById(section)?.scrollIntoView({
-        behavior: "smooth"
-      });
-    }, 100);
+  // REGENERATE LAST AI RESPONSE
+  async function regenerateResponse() {
+    if (!activeChat || !selectedAgent || isLoading) return;
+
+    const lastUserMessage = [...activeChat.messages]
+      .reverse()
+      .find(item => item.role === "user");
+
+    if (!lastUserMessage) return;
+
+    const chatId = activeChat.id;
+    const question = lastUserMessage.text;
+    const agent = selectedAgent;
+
+    setChatError("");
+    setIsLoading(true);
+
+    try {
+      const result = await getAgentReply(
+        agent.name,
+        question,
+        agent.instructions || ""
+      );
+
+      const reply =
+        typeof result === "string"
+          ? result
+          : String(result?.reply || result?.message || "No response received.");
+
+      const assistantMessage = {
+        id: generateId(),
+        role: "assistant",
+        text: reply,
+        createdAt: Date.now()
+      };
+
+      setChats(previous =>
+        previous.map(chat =>
+          chat.id === chatId
+            ? {
+                ...chat,
+                messages: [...chat.messages, assistantMessage],
+                updatedAt: Date.now()
+              }
+            : chat
+        )
+      );
+    } catch (error) {
+      setChatError(error?.message || "Could not regenerate response.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // EXPORT CHAT
+  function exportConversation(chat) {
+    if (!chat) return;
+
+    const agent = allAgents.find(
+      item => item.id === chat.agentId
+    );
+
+    const content = [
+      "VERTICAL AI PLATFORM",
+      `Agent: ${agent?.name || "Unknown Agent"}`,
+      `Conversation: ${chat.title}`,
+      `Date: ${new Date(chat.createdAt).toLocaleString()}`,
+      "",
+      ...chat.messages.map(item =>
+        `${item.role.toUpperCase()} (${formatTime(item.createdAt)}):\n${item.text}\n`
+      )
+    ].join("\n");
+
+    const blob = new Blob([content], {
+      type: "text/plain;charset=utf-8"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `vertical-ai-${chat.title.replace(/[^a-z0-9]/gi, "-")}.txt`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  }
+
+  // SHARED CARD
+  function AgentCard({ agent }) {
+    const Icon = agent.icon;
+
+    return (
+      <article className="agent-card" key={agent.id}>
+        <div className="agent-top">
+          <div
+            className="agent-icon"
+            style={{ color: agent.color }}
+          >
+            <Icon size={27} />
+          </div>
+
+          <span className="agent-status">
+            {agent.status}
+          </span>
+        </div>
+
+        <p className="agent-category">{agent.category}</p>
+        <h3>{agent.name}</h3>
+        <p className="agent-description">
+          {agent.description}
+        </p>
+
+        <button
+          className="agent-link"
+          onClick={() => openAgent(agent)}
+        >
+          Explore Agent
+          <ArrowUpRight size={16} />
+        </button>
+
+        {agent.isCustom && (
+          <div className="agent-management-actions">
+            <button
+              type="button"
+              onClick={() => handleEditCustomAgent(agent)}
+              title="Edit agent"
+            >
+              <Pencil size={15} /> Edit
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDeleteCustomAgent(agent)}
+              title="Delete agent"
+            >
+              <Trash2 size={15} /> Delete
+            </button>
+          </div>
+        )}
+      </article>
+    );
   }
 
   const detailInfo = detailsAgent
@@ -692,11 +1028,28 @@ export default function App() {
   return (
     <div className="app">
 
+      {mobileMenu && (
+        <div
+          className="mobile-overlay"
+          onClick={() => setMobileMenu(false)}
+        />
+      )}
+
       <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
         <div className="brand">
-          <div className="brand-icon"><Bot size={25} /></div>
-          <span>Vertical<span className="brand-light">AI</span></span>
-          <button className="close-menu" onClick={() => setMobileMenu(false)} aria-label="Close menu">
+          <div className="brand-icon">
+            <Bot size={25} />
+          </div>
+
+          <span>
+            Vertical<span className="brand-light">AI</span>
+          </span>
+
+          <button
+            className="close-menu"
+            onClick={() => setMobileMenu(false)}
+            aria-label="Close menu"
+          >
             <X />
           </button>
         </div>
@@ -705,50 +1058,99 @@ export default function App() {
 
         <nav>
           <button
-            className={`nav-item ${!selectedAgent && !detailsAgent ? "active" : ""}`}
+            className={`nav-item ${
+              !selectedAgent && !detailsAgent ? "active" : ""
+            }`}
             onClick={closeAgent}
           >
-            <LayoutDashboard size={19} /> Dashboard
+            <LayoutDashboard size={19} />
+            Dashboard
           </button>
 
-          <button className="nav-item" onClick={() => navigateTo("agents")}>
-            <Compass size={19} /> Explore Agents
+          <button
+            className="nav-item"
+            onClick={() => navigateTo("agents")}
+          >
+            <Compass size={19} />
+            Explore Agents
           </button>
 
-          <button className="nav-item" onClick={() => navigateTo("create")}>
-            <Plus size={19} /> Create AI Agent
+          <button
+            className="nav-item"
+            onClick={() => navigateTo("create")}
+          >
+            <Plus size={19} />
+            Create AI Agent
           </button>
         </nav>
 
         {selectedAgent && (
           <div className="history-panel">
             <div className="history-title">
-              <span><History size={16} /> Chat History</span>
-              <button title="New Chat" onClick={() => createNewChat(selectedAgent)}>
+              <span>
+                <History size={16} />
+                Chat History
+              </span>
+
+              <button
+                title="New Chat"
+                onClick={() => createNewChat(selectedAgent)}
+              >
                 <Plus size={18} />
               </button>
             </div>
 
             <div className="history-list">
               {agentChats.length === 0 ? (
-                <p className="history-empty">No conversations yet.</p>
+                <p className="history-empty">
+                  No conversations yet.
+                </p>
               ) : (
                 agentChats.map(chat => (
                   <div
                     key={chat.id}
-                    className={`history-item ${activeChatId === chat.id ? "selected" : ""}`}
+                    className={`history-item ${
+                      activeChatId === chat.id ? "selected" : ""
+                    }`}
                   >
-                    <button className="history-open" onClick={() => openExistingChat(chat)} title={chat.title}>
+                    <button
+                      className="history-open"
+                      onClick={() => openExistingChat(chat)}
+                      title={chat.title}
+                    >
                       <MessageSquarePlus size={15} />
                       <span>{chat.title}</span>
                     </button>
-                    <button className="history-delete" title="Delete conversation" onClick={() => deleteChat(chat.id)}>
+
+                    <button
+                      className="history-delete"
+                      title="Rename conversation"
+                      onClick={() => renameChat(chat)}
+                    >
+                      <Pencil size={13} />
+                    </button>
+
+                    <button
+                      className="history-delete"
+                      title="Delete conversation"
+                      onClick={() => deleteChat(chat.id)}
+                    >
                       <Trash2 size={14} />
                     </button>
                   </div>
                 ))
               )}
             </div>
+
+            {agentChats.length > 0 && (
+              <button
+                className="clear-history-button"
+                onClick={clearAllChats}
+              >
+                <Trash2 size={14} />
+                Clear All History
+              </button>
+            )}
           </div>
         )}
 
@@ -756,25 +1158,40 @@ export default function App() {
           <div className="upgrade-card">
             <Sparkles size={23} />
             <h3>Build with AI</h3>
-            <p>Create intelligent agents for your business.</p>
+            <p>
+              Create intelligent agents for your business.
+            </p>
+
             <button onClick={() => navigateTo("create")}>
-              Get Started <ArrowUpRight size={15} />
+              Get Started
+              <ArrowUpRight size={15} />
             </button>
           </div>
-          <p className="version">VERTICAL AI PLATFORM · V3.3</p>
+
+          <p className="version">
+            VERTICAL AI PLATFORM · V3.4
+          </p>
         </div>
       </aside>
 
       <main className="main-content">
 
         <header className="topbar">
-          <button className="menu-button" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Toggle menu">
+          <button
+            className="menu-button"
+            onClick={() => setMobileMenu(!mobileMenu)}
+            aria-label="Toggle menu"
+          >
             <Menu />
           </button>
 
           <div className="breadcrumb">
             Platform <span>/</span>
-            {detailsAgent ? detailsAgent.name : selectedAgent ? selectedAgent.name : "Dashboard"}
+            {detailsAgent
+              ? detailsAgent.name
+              : selectedAgent
+              ? selectedAgent.name
+              : "Dashboard"}
           </div>
 
           <div className="top-actions">
@@ -784,35 +1201,77 @@ export default function App() {
           </div>
         </header>
 
+        {/* AGENT DETAILS */}
         {detailsAgent ? (
           <section className="agent-details-page">
-            <button className="details-back-button" onClick={closeAgent}>
-              <ArrowLeft size={18} /> Back to Marketplace
+            <button
+              className="details-back-button"
+              onClick={closeAgent}
+            >
+              <ArrowLeft size={18} />
+              Back to Marketplace
             </button>
 
             <div className="details-hero">
-              <div className="details-agent-icon" style={{ color: detailsAgent.color }}>
+              <div
+                className="details-agent-icon"
+                style={{ color: detailsAgent.color }}
+              >
                 {(() => {
                   const Icon = detailsAgent.icon;
                   return <Icon size={38} />;
                 })()}
               </div>
 
-              <p className="details-category">{detailsAgent.category} AI AGENT</p>
-              <h1>{detailsAgent.name}</h1>
-              <p className="details-description">{detailsAgent.description}</p>
+              <p className="details-category">
+                {detailsAgent.category} AI AGENT
+              </p>
 
-              <button className="details-use-button" onClick={() => createNewChat(detailsAgent)}>
-                <Sparkles size={18} /> Use This Agent <ArrowUpRight size={18} />
+              <h1>{detailsAgent.name}</h1>
+
+              <p className="details-description">
+                {detailsAgent.description}
+              </p>
+
+              <button
+                className="details-use-button"
+                onClick={() => createNewChat(detailsAgent)}
+              >
+                <Sparkles size={18} />
+                Use This Agent
+                <ArrowUpRight size={18} />
               </button>
+
+              {detailsAgent.isCustom && (
+                <div className="agent-management-actions details-management">
+                  <button
+                    onClick={() => handleEditCustomAgent(detailsAgent)}
+                  >
+                    <Pencil size={16} />
+                    Edit Agent
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteCustomAgent(detailsAgent)}
+                  >
+                    <Trash2 size={16} />
+                    Delete Agent
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="details-section">
               <h2>Key Features</h2>
+
               <div className="details-feature-grid">
                 {detailInfo.features.map((feature, index) => (
-                  <div className="details-feature-card" key={index}>
-                    <Check size={19} /><p>{feature}</p>
+                  <div
+                    className="details-feature-card"
+                    key={index}
+                  >
+                    <Check size={19} />
+                    <p>{feature}</p>
                   </div>
                 ))}
               </div>
@@ -820,16 +1279,21 @@ export default function App() {
 
             <div className="details-section">
               <h2>What Can You Do With This Agent?</h2>
+
               <div className="details-feature-grid">
                 {detailInfo.uses.map((use, index) => (
-                  <div className="details-feature-card" key={index}>
-                    <Sparkles size={19} /><p>{use}</p>
+                  <div
+                    className="details-feature-card"
+                    key={index}
+                  >
+                    <Sparkles size={19} />
+                    <p>{use}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {detailsAgent.isCustom && detailsAgent.instructions && (
+            {detailsAgent.isCustom && (
               <div className="chat-notice">
                 <strong>Your Agent Instructions:</strong>
                 <p>{detailsAgent.instructions}</p>
@@ -837,50 +1301,101 @@ export default function App() {
             )}
 
             <div className="chat-notice">
-              Live AI responses and backend integration can be connected through the agent service.
+              AI responses and backend integration can be connected through the agent service.
             </div>
           </section>
 
         ) : selectedAgent ? (
+
+          /* CHAT WORKSPACE */
           <section className="chat-page">
+
             <div className="workspace-toolbar">
-              <button className="back-button" onClick={closeAgent}>
-                <ArrowLeft size={18} /> Dashboard
+              <button
+                className="back-button"
+                onClick={closeAgent}
+              >
+                <ArrowLeft size={18} />
+                Dashboard
               </button>
-              <button className="new-chat-button" onClick={() => createNewChat(selectedAgent)}>
-                <MessageSquarePlus size={17} /> New Chat
-              </button>
+
+              <div className="workspace-toolbar-actions">
+                <button
+                  className="new-chat-button"
+                  onClick={() => createNewChat(selectedAgent)}
+                >
+                  <MessageSquarePlus size={17} />
+                  New Chat
+                </button>
+
+                {activeChat && (
+                  <>
+                    <button
+                      className="new-chat-button"
+                      onClick={() => renameChat(activeChat)}
+                      title="Rename conversation"
+                    >
+                      <Pencil size={16} />
+                      Rename
+                    </button>
+
+                    <button
+                      className="new-chat-button"
+                      onClick={() => exportConversation(activeChat)}
+                      title="Export conversation"
+                    >
+                      <Download size={16} />
+                      Export
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="chat-heading">
-              <div className="chat-agent-icon" style={{ color: selectedAgent.color }}>
+              <div
+                className="chat-agent-icon"
+                style={{ color: selectedAgent.color }}
+              >
                 {(() => {
                   const Icon = selectedAgent.icon;
                   return <Icon size={30} />;
                 })()}
               </div>
+
               <div className="agent-heading-info">
                 <h1>{selectedAgent.name}</h1>
                 <p>{selectedAgent.category} AI Assistant</p>
               </div>
+
               <span className="demo-badge">DEMO</span>
             </div>
 
             <div className="agent-switcher">
-              <label htmlFor="agent-switch"><Bot size={16} /> Switch Agent</label>
+              <label htmlFor="agent-switch">
+                <Bot size={16} />
+                Switch Agent
+              </label>
+
               <div className="agent-select-wrapper">
                 <select
                   id="agent-switch"
                   value={selectedAgent.id}
                   onChange={e => {
-                    const nextAgent = allAgents.find(item => item.id === e.target.value);
+                    const nextAgent = allAgents.find(
+                      item => item.id === e.target.value
+                    );
+
                     if (nextAgent) openAgent(nextAgent);
                   }}
                 >
                   {allAgents.map(agent => (
-                    <option key={agent.id} value={agent.id}>{agent.name}</option>
+                    <option key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </option>
                   ))}
                 </select>
+
                 <ChevronDown size={16} />
               </div>
             </div>
@@ -889,33 +1404,57 @@ export default function App() {
               Your conversations are saved in this browser. Backend database integration can be added later.
             </div>
 
-            <div className="chat-messages" ref={messagesContainerRef} aria-live="polite">
+            <div
+              className="chat-messages"
+              ref={messagesContainerRef}
+              aria-live="polite"
+            >
               {messages.length === 0 ? (
-                <p className="history-empty">No messages in this conversation. Send a message to start.</p>
+                <p className="history-empty">
+                  No messages in this conversation. Send a message to start.
+                </p>
               ) : (
                 messages.map(item => (
-                  <div className={`message-row ${item.role}`} key={item.id}>
+                  <div
+                    className={`message-row ${item.role}`}
+                    key={item.id}
+                  >
                     <div className="message-avatar">
-                      {item.role === "assistant" ? <Bot size={18} /> : <User size={18} />}
+                      {item.role === "assistant"
+                        ? <Bot size={18} />
+                        : <User size={18} />}
                     </div>
 
                     <div className="message-content">
-                      <div className="message-bubble"><p>{item.text}</p></div>
+                      <div className="message-bubble">
+                        <p>{item.text}</p>
+                      </div>
 
                       <div className="message-actions">
                         {item.createdAt && (
                           <span className="message-time">
-                            <Clock size={12} /> {formatTime(item.createdAt)}
+                            <Clock size={12} />
+                            {formatTime(item.createdAt)}
                           </span>
                         )}
 
-                        <button onClick={() => copyMessage(item)} title="Copy message">
-                          {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
+                        <button
+                          onClick={() => copyMessage(item)}
+                          title="Copy message"
+                        >
+                          {copiedId === item.id
+                            ? <Check size={14} />
+                            : <Copy size={14} />}
                           {copiedId === item.id ? "Copied" : "Copy"}
                         </button>
 
-                        <button onClick={() => deleteMessage(item.id)} title="Delete message">
-                          <Trash2 size={14} /> Delete
+                        <button
+                          onClick={() => deleteMessage(item.id)}
+                          disabled={isLoading}
+                          title="Delete message"
+                        >
+                          <Trash2 size={14} />
+                          Delete
                         </button>
                       </div>
                     </div>
@@ -925,14 +1464,31 @@ export default function App() {
 
               {isLoading && (
                 <div className="loading-message">
-                  <RefreshCw size={16} /> AI Agent is thinking...
+                  <RefreshCw size={16} />
+                  AI Agent is thinking...
                 </div>
               )}
 
-              {chatError && <div className="error-message" role="alert">{chatError}</div>}
+              {chatError && (
+                <div className="error-message" role="alert">
+                  <span>{chatError}</span>
+
+                  <button
+                    type="button"
+                    onClick={regenerateResponse}
+                    disabled={isLoading}
+                  >
+                    <RotateCcw size={15} />
+                    Retry
+                  </button>
+                </div>
+              )}
             </div>
 
-            <form className="chat-input-area" onSubmit={sendMessage}>
+            <form
+              className="chat-input-area"
+              onSubmit={sendMessage}
+            >
               <input
                 value={message}
                 onChange={e => setMessage(e.target.value)}
@@ -941,26 +1497,58 @@ export default function App() {
                 disabled={isLoading}
               />
 
-              <button type="submit" disabled={!message.trim() || !activeChat || isLoading} aria-label="Send message">
+              <button
+                type="submit"
+                disabled={!message.trim() || !activeChat || isLoading}
+                aria-label="Send message"
+              >
                 <Send size={19} />
               </button>
             </form>
 
             <div className="workspace-bottom-actions">
-              <button onClick={clearCurrentChat} disabled={!activeChat || isLoading}>
-                <Trash2 size={15} /> Clear Current Chat
+              <button
+                onClick={clearCurrentChat}
+                disabled={!activeChat || isLoading}
+              >
+                <Trash2 size={15} />
+                Clear Current Chat
+              </button>
+
+              <button
+                onClick={regenerateResponse}
+                disabled={
+                  isLoading ||
+                  !messages.some(item => item.role === "user")
+                }
+              >
+                <RefreshCw size={15} />
+                Regenerate Response
               </button>
             </div>
 
-            <p className="chat-footer">Vertical AI Platform · Agent Workspace V3.3</p>
+            <p className="chat-footer">
+              Vertical AI Platform · Agent Workspace V3.4
+            </p>
           </section>
 
         ) : (
+
+          /* DASHBOARD */
           <>
             <section className="welcome-section" id="dashboard">
               <div>
-                <div className="eyebrow"><Sparkles size={15} /> THE FUTURE OF BUSINESS AI</div>
-                <h1>Intelligence for<br /><span>Every Industry.</span></h1>
+                <div className="eyebrow">
+                  <Sparkles size={15} />
+                  THE FUTURE OF BUSINESS AI
+                </div>
+
+                <h1>
+                  Intelligence for
+                  <br />
+                  <span>Every Industry.</span>
+                </h1>
+
                 <p className="welcome-description">
                   Discover powerful AI agents designed for your industry.
                   Automate workflows, improve productivity and grow faster.
@@ -968,37 +1556,74 @@ export default function App() {
 
                 <div className="hero-actions">
                   <a href="#agents" className="primary-button">
-                    Explore AI Agents <ArrowUpRight size={17} />
+                    Explore AI Agents
+                    <ArrowUpRight size={17} />
                   </a>
-                  <a href="#create" className="secondary-button">Create Your Agent</a>
+
+                  <a href="#create" className="secondary-button">
+                    Create Your Agent
+                  </a>
                 </div>
               </div>
 
               <div className="hero-visual">
                 <div className="orbit orbit-one"></div>
                 <div className="orbit orbit-two"></div>
-                <div className="hero-core"><Bot size={65} /></div>
-                <div className="floating-icon icon-one"><HeartPulse /></div>
-                <div className="floating-icon icon-two"><Sprout /></div>
-                <div className="floating-icon icon-three"><Landmark /></div>
+
+                <div className="hero-core">
+                  <Bot size={65} />
+                </div>
+
+                <div className="floating-icon icon-one">
+                  <HeartPulse />
+                </div>
+
+                <div className="floating-icon icon-two">
+                  <Sprout />
+                </div>
+
+                <div className="floating-icon icon-three">
+                  <Landmark />
+                </div>
               </div>
             </section>
 
             <section className="stats-grid">
               <div className="stat-card">
-                <div className="stat-icon purple"><Bot /></div>
-                <div><p>AI AGENTS</p><h2>{String(allAgents.length).padStart(2, "0")}</h2></div>
+                <div className="stat-icon purple">
+                  <Bot />
+                </div>
+
+                <div>
+                  <p>AI AGENTS</p>
+                  <h2>{String(allAgents.length).padStart(2, "0")}</h2>
+                </div>
               </div>
+
               <div className="stat-card">
-                <div className="stat-icon green"><Zap /></div>
-                <div><p>INDUSTRIES</p><h2>06</h2></div>
+                <div className="stat-icon green">
+                  <Zap />
+                </div>
+
+                <div>
+                  <p>INDUSTRIES</p>
+                  <h2>06</h2>
+                </div>
               </div>
+
               <div className="stat-card">
-                <div className="stat-icon blue"><Sparkles /></div>
-                <div><p>PLATFORM STATUS</p><h2 className="live-status">Active</h2></div>
+                <div className="stat-icon blue">
+                  <Sparkles />
+                </div>
+
+                <div>
+                  <p>PLATFORM STATUS</p>
+                  <h2 className="live-status">Active</h2>
+                </div>
               </div>
             </section>
 
+            {/* AGENT MARKETPLACE */}
             <section className="agents-section" id="agents">
               <div className="section-heading">
                 <div>
@@ -1010,19 +1635,33 @@ export default function App() {
 
               <div className="search-box">
                 <Search size={20} />
+
                 <input
                   placeholder="Search AI agents or industries..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   aria-label="Search AI agents"
                 />
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
 
               <div className="category-list">
                 {categories.map(category => (
                   <button
                     key={category}
-                    className={activeCategory === category ? "category active-category" : "category"}
+                    className={
+                      activeCategory === category
+                        ? "category active-category"
+                        : "category"
+                    }
                     onClick={() => setActiveCategory(category)}
                   >
                     {category}
@@ -1030,43 +1669,44 @@ export default function App() {
                 ))}
               </div>
 
+              <div className="agent-filter-actions">
+                <button
+                  className={showCustomOnly ? "category active-category" : "category"}
+                  onClick={() => setShowCustomOnly(!showCustomOnly)}
+                >
+                  {showCustomOnly ? "Showing My Agents" : "My Custom Agents"}
+                </button>
+
+                <span>
+                  {filteredAgents.length} agents found
+                </span>
+              </div>
+
               <div className="agents-grid">
-                {filteredAgents.map(agent => {
-                  const Icon = agent.icon;
-
-                  return (
-                    <article className="agent-card" key={agent.id}>
-                      <div className="agent-top">
-                        <div className="agent-icon" style={{ color: agent.color }}>
-                          <Icon size={27} />
-                        </div>
-                        <span className="agent-status">{agent.status}</span>
-                      </div>
-
-                      <p className="agent-category">{agent.category}</p>
-                      <h3>{agent.name}</h3>
-                      <p className="agent-description">{agent.description}</p>
-
-                      <button className="agent-link" onClick={() => openAgent(agent)}>
-                        Explore Agent <ArrowUpRight size={16} />
-                      </button>
-                    </article>
-                  );
-                })}
+                {filteredAgents.map(agent => (
+                  <AgentCard agent={agent} key={agent.id} />
+                ))}
 
                 {filteredAgents.length === 0 && (
-                  <p className="empty-message">No agents found. Try another search.</p>
+                  <p className="empty-message">
+                    No agents found. Try another search.
+                  </p>
                 )}
               </div>
             </section>
 
+            {/* CUSTOM AGENT BUILDER */}
             <section className="create-section" id="create">
-              <div className="create-icon"><Sparkles size={30} /></div>
+              <div className="create-icon">
+                <Sparkles size={30} />
+              </div>
 
               <div>
                 <p className="eyebrow">BUILD YOUR OWN</p>
                 <h2>Create Your Custom AI Agent</h2>
-                <p>Design an intelligent assistant tailored to your business needs.</p>
+                <p>
+                  Design an intelligent assistant tailored to your business needs.
+                </p>
               </div>
 
               <button
@@ -1077,67 +1717,59 @@ export default function App() {
                   });
                 }}
               >
-                <Plus size={18} /> Create Agent
+                <Plus size={18} />
+                Create Agent
               </button>
             </section>
 
             <section className="create-section" id="agent-builder">
-              <div className="create-icon"><Bot size={30} /></div>
+              <div className="create-icon">
+                <Bot size={30} />
+              </div>
 
               <div style={{ width: "100%" }}>
                 <p className="eyebrow">CUSTOM AGENT BUILDER</p>
                 <h2>Build Your Own AI Agent</h2>
-                <p>Enter details and instructions for your personalized assistant.</p>
+                <p>
+                  Enter details and instructions for your personalized assistant.
+                </p>
 
                 <form
                   onSubmit={handleCreateAgent}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "14px",
-                    marginTop: "22px",
-                    maxWidth: "520px"
-                  }}
+                  className="agent-builder-form"
                 >
                   <label>
                     Agent Name
+
                     <input
                       value={agentName}
                       onChange={e => setAgentName(e.target.value)}
                       placeholder="Example: My Business Assistant"
                       maxLength={40}
                       required
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "13px",
-                        marginTop: "7px",
-                        borderRadius: "10px"
-                      }}
                     />
                   </label>
 
                   <label>
                     Industry
+
                     <select
                       value={agentCategory}
                       onChange={e => setAgentCategory(e.target.value)}
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "13px",
-                        marginTop: "7px",
-                        borderRadius: "10px"
-                      }}
                     >
-                      {categories.filter(item => item !== "All").map(category => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
+                      {categories
+                        .filter(item => item !== "All")
+                        .map(category => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
                     </select>
                   </label>
 
                   <label>
                     Agent Description
+
                     <textarea
                       value={agentDescription}
                       onChange={e => setAgentDescription(e.target.value)}
@@ -1145,19 +1777,12 @@ export default function App() {
                       rows={3}
                       maxLength={300}
                       required
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "13px",
-                        marginTop: "7px",
-                        borderRadius: "10px",
-                        resize: "vertical"
-                      }}
                     />
                   </label>
 
                   <label>
                     Agent Instructions
+
                     <textarea
                       value={agentInstructions}
                       onChange={e => setAgentInstructions(e.target.value)}
@@ -1165,34 +1790,37 @@ export default function App() {
                       rows={5}
                       maxLength={1000}
                       required
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        padding: "13px",
-                        marginTop: "7px",
-                        borderRadius: "10px",
-                        resize: "vertical"
-                      }}
                     />
-                    <small style={{ display: "block", marginTop: "6px", opacity: 0.7 }}>
+
+                    <small>
                       Explain how your AI agent should behave. Maximum 1000 characters.
                     </small>
                   </label>
 
                   {createError && (
-                    <p style={{ color: "#f87171" }}>{createError}</p>
+                    <p className="error-message">
+                      {createError}
+                    </p>
                   )}
 
-                  <button type="submit" className="primary-button">
-                    <Plus size={18} /> Create My Agent
+                  <button
+                    type="submit"
+                    className="primary-button"
+                  >
+                    <Plus size={18} />
+                    Create My Agent
                   </button>
                 </form>
               </div>
             </section>
 
             <footer>
-              <p>© 2026 Vertical AI Platform. All rights reserved.</p>
-              <p>Built for the future of every industry.</p>
+              <p>
+                © 2026 Vertical AI Platform. All rights reserved.
+              </p>
+              <p>
+                Built for the future of every industry.
+              </p>
             </footer>
           </>
         )}
