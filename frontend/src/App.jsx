@@ -324,7 +324,11 @@ const messagesEndRef = useRef(null);
   );
 
   const messages = activeChat?.messages || [];
-
+useEffect(() => {
+  messagesEndRef.current?.scrollIntoView({
+    behavior: "smooth"
+  });
+}, [messages, isLoading]);
   // Chats belonging to selected agent
   const agentChats = chats
     .filter((chat) => chat.agentId === selectedAgent?.id)
