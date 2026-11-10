@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+7import { useEffect, useRef, useState } from "react";
 import { getAgentReply } from "./services/agentService";
 import {
   Search, LayoutDashboard, Compass, Bot, Plus,
@@ -989,10 +989,11 @@ try {
 
             </div>
 
-            <div ref={messagesEndRef} />
-</div>
+                        <div ref={messagesEndRef} />
 
-{/* MESSAGE INPUT */}
+            </div>
+
+            {/* MESSAGE INPUT */}
             <form
               className="chat-input-area"
               onSubmit={sendMessage}
