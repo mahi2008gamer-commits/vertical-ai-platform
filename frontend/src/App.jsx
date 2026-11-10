@@ -211,6 +211,7 @@ export default function App() {
   const [mobileMenu, setMobileMenu] = useState(false);
 
   const [selectedAgent, setSelectedAgent] = useState(null);
+  const [detailsAgent, setDetailsAgent] = useState(null);
   const [activeChatId, setActiveChatId] = useState(null);
 
   const [chats, setChats] = useState(readSavedChats);
