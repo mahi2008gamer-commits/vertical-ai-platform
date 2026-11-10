@@ -143,6 +143,9 @@ function readSavedAgents() {
       )
       .map(agent => ({
         ...agent,
+        instructions: typeof agent.instructions === "string"
+          ? agent.instructions
+          : "",
         icon: categoryIcons[agent.category],
         color: categoryColors[agent.category],
         status: "Custom",
@@ -257,6 +260,7 @@ export default function App() {
   const [agentName, setAgentName] = useState("");
   const [agentCategory, setAgentCategory] = useState("Healthcare");
   const [agentDescription, setAgentDescription] = useState("");
+  const [agentInstructions, setAgentInstructions] = useState("");
   const [createError, setCreateError] = useState("");
 
   const messagesContainerRef = useRef(null);
@@ -372,14 +376,20 @@ export default function App() {
 
     const name = agentName.trim();
     const description = agentDescription.trim();
+    const instructions = agentInstructions.trim();
 
-    if (!name || !description) {
-      setCreateError("Please enter agent name and description.");
+    if (!name || !description || !instructions) {
+      setCreateError("Please enter agent name, description and instructions.");
       return;
     }
 
     if (name.length > 40) {
       setCreateError("Agent name must be 40 characters or less.");
+      return;
+    }
+
+    if (instructions.length > 1000) {
+      setCreateError("Instructions must be 1000 characters or less.");
       return;
     }
 
@@ -397,6 +407,7 @@ export default function App() {
       name,
       category: agentCategory,
       description,
+      instructions,
       icon: categoryIcons[agentCategory],
       color: categoryColors[agentCategory],
       status: "Custom",
@@ -408,6 +419,7 @@ export default function App() {
     setAgentName("");
     setAgentCategory("Healthcare");
     setAgentDescription("");
+    setAgentInstructions("");
     setCreateError("");
     setActiveCategory("All");
     setSearch("");
@@ -457,7 +469,11 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const result = await getAgentReply(agent.name, question);
+      const result = await getAgentReply(
+        agent.name,
+        question,
+        agent.instructions || ""
+      );
 
       const reply = typeof result === "string"
         ? result
@@ -661,7 +677,7 @@ export default function App() {
               Get Started <ArrowUpRight size={15} />
             </button>
           </div>
-          <p className="version">VERTICAL AI PLATFORM · V3.0</p>
+          <p className="version">VERTICAL AI PLATFORM · V3.3</p>
         </div>
       </aside>
 
@@ -728,6 +744,13 @@ export default function App() {
                 ))}
               </div>
             </div>
+
+            {detailsAgent.isCustom && detailsAgent.instructions && (
+              <div className="chat-notice">
+                <strong>Your Agent Instructions:</strong>
+                <p>{detailsAgent.instructions}</p>
+              </div>
+            )}
 
             <div className="chat-notice">
               Live AI responses and backend integration can be connected through the agent service.
@@ -845,7 +868,7 @@ export default function App() {
               </button>
             </div>
 
-            <p className="chat-footer">Vertical AI Platform · Agent Workspace V3.2</p>
+            <p className="chat-footer">Vertical AI Platform · Agent Workspace V3.3</p>
           </section>
 
         ) : (
@@ -980,7 +1003,7 @@ export default function App() {
               <div style={{ width: "100%" }}>
                 <p className="eyebrow">CUSTOM AGENT BUILDER</p>
                 <h2>Build Your Own AI Agent</h2>
-                <p>Enter details to create your personalized assistant.</p>
+                <p>Enter details and instructions for your personalized assistant.</p>
 
                 <form
                   onSubmit={handleCreateAgent}
@@ -1035,7 +1058,7 @@ export default function App() {
                       value={agentDescription}
                       onChange={e => setAgentDescription(e.target.value)}
                       placeholder="Describe what your AI agent should help with..."
-                      rows={4}
+                      rows={3}
                       maxLength={300}
                       required
                       style={{
@@ -1047,6 +1070,29 @@ export default function App() {
                         resize: "vertical"
                       }}
                     />
+                  </label>
+
+                  <label>
+                    Agent Instructions
+                    <textarea
+                      value={agentInstructions}
+                      onChange={e => setAgentInstructions(e.target.value)}
+                      placeholder="Example: You are a finance expert. Give simple answers about budgeting, expenses and business finance. Always explain step by step."
+                      rows={5}
+                      maxLength={1000}
+                      required
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        padding: "13px",
+                        marginTop: "7px",
+                        borderRadius: "10px",
+                        resize: "vertical"
+                      }}
+                    />
+                    <small style={{ display: "block", marginTop: "6px", opacity: 0.7 }}>
+                      Explain how your AI agent should behave. Maximum 1000 characters.
+                    </small>
                   </label>
 
                   {createError && (
