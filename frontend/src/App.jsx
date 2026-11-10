@@ -924,7 +924,7 @@ try {
             </div>
 
             {/* MESSAGES */}
-            <div className="chat-messages">
+            <div className="chat-messages" ref={messagesContainerRef}>
 
               {messages.length === 0 ? (
                 <p className="history-empty">
