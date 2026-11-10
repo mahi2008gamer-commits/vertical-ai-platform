@@ -1217,3 +1217,134 @@ footer {
   }
 }
 
+/* PHASE 5 - AGENT DETAILS PAGE */
+
+.agent-details-page {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 30px 0 60px;
+}
+
+.details-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #334155;
+  border-radius: 9px;
+  background: #101929;
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.details-hero {
+  margin-top: 28px;
+  padding: 35px;
+  border: 1px solid #49356d;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #211b3a, #101929);
+}
+
+.details-agent-icon {
+  width: 65px;
+  height: 65px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #30244f;
+  margin-bottom: 22px;
+}
+
+.details-category {
+  color: #a78bfa;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.details-hero h1 {
+  font-size: clamp(27px, 5vw, 40px);
+  margin-bottom: 13px;
+}
+
+.details-description {
+  max-width: 650px;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.details-section {
+  margin-top: 35px;
+}
+
+.details-section h2 {
+  font-size: 21px;
+  margin-bottom: 18px;
+}
+
+.details-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.details-feature-card {
+  padding: 20px;
+  border: 1px solid #263248;
+  border-radius: 12px;
+  background: #101929;
+}
+
+.details-feature-card h3 {
+  font-size: 14px;
+  margin: 12px 0 8px;
+}
+
+.details-feature-card p {
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.details-use-button {
+  margin-top: 30px;
+  width: 100%;
+  padding: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(100deg, #7c3aed, #4f46e5);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.details-use-button:hover {
+  filter: brightness(1.15);
+}
+
+@media (max-width: 700px) {
+  .agent-details-page {
+    padding: 22px 0 40px;
+  }
+
+  .details-hero {
+    padding: 23px;
+  }
+
+  .details-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .details-hero h1 {
+    font-size: 27px;
+  }
+}
+
+
