@@ -1,15 +1,28 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#080d1a" />
+    <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f1216" media="(prefers-color-scheme: dark)" />
     <meta
       name="description"
-      content="Vertical AI Platform - Your AI Agents for Every Industry"
+      content="Vertical AI Platform - AI assistants for every industry"
     />
     <title>Vertical AI Platform</title>
+    <script>
+      (function () {
+        try {
+          var saved = JSON.parse(localStorage.getItem("vertical-ai-settings") || "{}");
+          var theme = saved && saved.theme;
+          var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var dark = theme === "dark" || (theme !== "light" && prefersDark);
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
+        } catch (error) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
   </head>
 
   <body>
