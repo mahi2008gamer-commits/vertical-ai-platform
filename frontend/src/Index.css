@@ -1513,3 +1513,122 @@ td {
     padding: 6px;
   }
 }
+/* FINAL UI FIXES FOR APP.JSX */
+
+input,
+textarea,
+select {
+  background-color: #111c2d !important;
+  color: #f1f5f9 !important;
+  border-color: #344158;
+  outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8493a8 !important;
+}
+
+.chat-input-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: #101827;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.chat-input-area input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid #344158;
+  border-radius: 10px;
+  background: #172235 !important;
+  color: white !important;
+}
+
+.chat-input-area button {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 10px;
+  background: #7c5cff;
+  color: white;
+}
+
+.agent-builder-form input,
+.agent-builder-form textarea,
+.agent-builder-form select {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid #344158;
+  border-radius: 9px;
+  background: #111c2d !important;
+  color: white !important;
+}
+
+.agent-builder-form label {
+  display: block;
+  margin-bottom: 15px;
+  color: #cbd5e1;
+}
+
+.agent-builder-form small {
+  color: #94a3b8;
+}
+
+.agent-select-wrapper select {
+  background: #172235 !important;
+  color: white !important;
+}
+
+.category,
+.new-chat-button,
+.secondary-button {
+  background-color: #172235;
+  color: #dbe5f2;
+}
+
+.message-bubble {
+  background: #192438;
+  color: #f1f5f9;
+}
+
+.message-bubble p {
+  color: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.history-item,
+.global-history-card,
+.agent-card,
+.stat-card {
+  background-color: #101827;
+}
+
+@media (max-width: 700px) {
+  .chat-input-area {
+    padding: 10px;
+  }
+
+  .chat-input-area input {
+    min-width: 0;
+    font-size: 12px;
+  }
+
+  .workspace-toolbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .agent-builder-form {
+    padding: 14px;
+  }
+}
+
