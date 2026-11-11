@@ -1282,7 +1282,18 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function showSettings() {
+  function showSettings() 
+  function showAdmin() {
+  setSelectedAgent(null);
+  setDetailsAgent(null);
+  setHistoryMode(false);
+  setSettingsMode(false);
+  setActiveChatId(null);
+  resetChatUi();
+  setAdminMode(true);
+  setMobileMenu(false);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  }{
     setSelectedAgent(null);
     setDetailsAgent(null);
     setHistoryMode(false);
