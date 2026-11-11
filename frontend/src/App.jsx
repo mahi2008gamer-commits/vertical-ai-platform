@@ -1283,7 +1283,15 @@ export default function App() {
   }
 
   function showSettings() 
-  function showAdmin() {
+  {
+    setSelectedAgent(null);
+    setDetailsAgent(null);
+    setHistoryMode(false);
+    setActiveChatId(null);
+    resetChatUi();
+    setSettingsMode(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }function showAdmin() {
   setSelectedAgent(null);
   setDetailsAgent(null);
   setHistoryMode(false);
@@ -1293,14 +1301,6 @@ export default function App() {
   setAdminMode(true);
   setMobileMenu(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
-  }{
-    setSelectedAgent(null);
-    setDetailsAgent(null);
-    setHistoryMode(false);
-    setActiveChatId(null);
-    resetChatUi();
-    setSettingsMode(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function navigateTo(section) {
