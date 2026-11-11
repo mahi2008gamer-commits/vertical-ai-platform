@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { getAgentReply, isBackendConfigured } from "./services/agentService";
+import AdminDashboard from "./AdminDashboard";
 import {
   Search, LayoutDashboard, Compass, Bot, Plus,
   ArrowUpRight, Menu, X, ArrowLeft, ArrowUp,
