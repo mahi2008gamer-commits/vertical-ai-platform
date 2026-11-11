@@ -1026,6 +1026,7 @@ export default function App() {
   const [activeChatId, setActiveChatId] = useState(initial.activeChatId);
   const [historyMode, setHistoryMode] = useState(initial.historyMode);
   const [settingsMode, setSettingsMode] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
