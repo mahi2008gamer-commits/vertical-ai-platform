@@ -1261,6 +1261,7 @@ export default function App() {
     setShowChatSearch(false);
     setMobileMenu(false);
     setSettingsMode(false);
+    setAdminMode(false);
   }
 
   function showDashboard() {
