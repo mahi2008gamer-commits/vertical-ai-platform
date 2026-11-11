@@ -2025,18 +2025,24 @@ export default function App() {
     ? safetyNotes[detailsAgent.category]
     : null;
 
-  const pageName = settingsMode
-    ? "Settings"
-    : historyMode
-    ? "Conversations"
-    : detailsAgent
-    ? detailsAgent.name
-    : selectedAgent
-    ? selectedAgent.name
-    : "Dashboard";
+  const pageName = adminMode
+  ? "Admin Dashboard"
+  : settingsMode
+  ? "Settings"
+  : historyMode
+  ? "Conversations"
+  : detailsAgent
+  ? detailsAgent.name
+  : selectedAgent
+  ? selectedAgent.name
+  : "Dashboard";
 
-  const onDashboard =
-    !selectedAgent && !detailsAgent && !historyMode && !settingsMode;
+const onDashboard =
+  !selectedAgent &&
+  !detailsAgent &&
+  !historyMode &&
+  !settingsMode &&
+  !adminMode;
 
   return (
     <div className="app">
