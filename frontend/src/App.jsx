@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getAgentReply } from "./services/agentService";
 import {
@@ -9,12 +10,13 @@ import {
   Check, ChevronDown, Clock, RefreshCw,
   Pencil, Download, Pin, PinOff,
   MessageSquare, RotateCcw, MessagesSquare,
-  ExternalLink
+  ExternalLink, Archive
 } from "lucide-react";
 
 const STORAGE_KEY = "vertical-ai-phase4-chats";
 const CUSTOM_AGENTS_KEY = "vertical-ai-custom-agents";
 const PINNED_KEY = "vertical-ai-pinned-chats";
+const WORKSPACE_KEY = "vertical-ai-workspace-state";
 
 const categories = [
   "All", "Healthcare", "Agriculture", "Finance",
@@ -268,28 +270,39 @@ function readSavedChats() {
   );
 }
 
-async function copyText(text) {
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      return true;
+function readSavedWorkspace() {
+  const saved = readStorage(WORKSPACE_KEY, {});
+
+  return saved && typeof saved === "object" && !Array.isArray(saved)
+    ? saved
+    : {};
+}
+
+function copyText(text) {
+  return new Promise(async resolve => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        resolve(true);
+        return;
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      const success = document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      resolve(success);
+    } catch {
+      resolve(false);
     }
-
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-
-    document.body.appendChild(textarea);
-    textarea.select();
-
-    const success = document.execCommand("copy");
-    document.body.removeChild(textarea);
-
-    return success;
-  } catch {
-    return false;
-  }
+  });
 }
 
 function formatTime(timestamp) {
@@ -324,15 +337,47 @@ export default function App() {
     [customAgents]
   );
 
+  const [savedWorkspace] = useState(readSavedWorkspace);
+
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
 
-  const [selectedAgent, setSelectedAgent] = useState(null);
-  const [detailsAgent, setDetailsAgent] = useState(null);
-  const [activeChatId, setActiveChatId] = useState(null);
+  const [selectedAgent, setSelectedAgent] = useState(() => {
+    const savedId = savedWorkspace.selectedAgentId;
+
+    return allAgents.find(agent => agent.id === savedId) || null;
+  });
+
+  const [detailsAgent, setDetailsAgent] = useState(() => {
+    if (savedWorkspace.selectedAgentId) return null;
+
+    const savedId = savedWorkspace.detailsAgentId;
+
+    return allAgents.find(agent => agent.id === savedId) || null;
+  });
+
+  const [activeChatId, setActiveChatId] = useState(() => {
+    const savedId = savedWorkspace.activeChatId;
+
+    const savedChat = readSavedChats().find(
+      chat => chat.id === savedId
+    );
+
+    if (!savedChat) return null;
+
+    if (
+      savedWorkspace.selectedAgentId &&
+      savedChat.agentId !== savedWorkspace.selectedAgentId
+    ) {
+      return null;
+    }
+
+    return savedChat.id;
+  });
 
   const [chats, setChats] = useState(readSavedChats);
+
   const [pinnedChats, setPinnedChats] = useState(
     () => readStorage(PINNED_KEY, [])
   );
@@ -350,7 +395,14 @@ export default function App() {
 
   const [showCustomOnly, setShowCustomOnly] = useState(false);
 
-  const [historyMode, setHistoryMode] = useState(false);
+  const [historyMode, setHistoryMode] = useState(() => {
+    return (
+      !savedWorkspace.selectedAgentId &&
+      !savedWorkspace.detailsAgentId &&
+      savedWorkspace.historyMode === true
+    );
+  });
+
   const [historySearch, setHistorySearch] = useState("");
   const [historyFilter, setHistoryFilter] = useState("All");
 
@@ -364,6 +416,7 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+
       setChatError(current =>
         current === "Storage is full. Export or delete old conversations."
           ? ""
@@ -393,6 +446,24 @@ export default function App() {
       console.error("Pinned chat saving error:", error);
     }
   }, [pinnedChats]);
+
+  // SAVE LAST ACTIVE WORKSPACE
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        WORKSPACE_KEY,
+        JSON.stringify({
+          selectedAgentId: selectedAgent?.id || null,
+          detailsAgentId: detailsAgent?.id || null,
+          activeChatId: activeChatId || null,
+          historyMode
+        })
+      );
+    } catch (error) {
+      console.error("Workspace saving error:", error);
+    }
+  }, [selectedAgent, detailsAgent, activeChatId, historyMode]);
 
   const activeChat = chats.find(chat => chat.id === activeChatId);
   const messages = activeChat?.messages || [];
@@ -452,10 +523,7 @@ export default function App() {
           ...chat.messages.map(item => item.text)
         ].join(" ").toLowerCase();
 
-        return (
-          matchesAgent &&
-          (!term || searchableText.includes(term))
-        );
+        return matchesAgent && (!term || searchableText.includes(term));
       })
       .sort((a, b) => {
         const aPinned = pinnedChats.includes(a.id);
@@ -858,7 +926,6 @@ export default function App() {
 
         if (messageIndex === -1) return chat;
 
-        // Remove old replies after the edited user message.
         const updatedMessages = chat.messages
           .slice(0, messageIndex + 1)
           .map(messageItem =>
@@ -2291,4 +2358,4 @@ export default function App() {
       </main>
     </div>
   );
-                   }
+}
